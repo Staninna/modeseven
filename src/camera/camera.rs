@@ -1,5 +1,5 @@
 use std::f32::consts::PI;
-use crate::physics::Car;
+use crate::physics::{Car, Vec2};
 
 pub struct Camera {
     pub x: f32,
@@ -63,5 +63,14 @@ impl Camera {
         // Adjust pitch based on speed (look further ahead at higher speeds)
         let target_pitch = PI / 6.0 + (car.get_speed() / 400.0) * (PI / 12.0);
         self.pitch += (target_pitch - self.pitch) * CAMERA_LERP * dt;
+    }
+    
+    pub fn transform(&self, world_point: Vec2) -> Vec2 {
+        let x = world_point.x - self.x;
+        let y = world_point.y - self.y;
+        Vec2::new(
+            x * self.scale + self.x,
+            y * self.scale + self.y,
+        )
     }
 }

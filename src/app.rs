@@ -1,14 +1,16 @@
+use std::rc::Rc;
 use anyhow::Result;
 use log::info;
 use pix_win_loop::{App, Context, Pixels};
 use std::time::Instant;
-
 use crate::{camera::Camera,
             consts::{PIXELS_HEIGHT, PIXELS_WIDTH},
             input::Controls,
             physics::Car,
             rendering::{Renderer, Texture},
             utils::FpsCounter};
+use crate::physics::Vec2;
+use crate::rendering::{Sprite, SpriteManager};
 use crate::world::World;
 
 pub struct Application {
@@ -24,10 +26,15 @@ pub struct Application {
 
 impl Application {
     pub fn new() -> Result<Self> {
-        let world = World::new();
+        let mut world = World::new();
         let ground_texture = Texture::from_image("assets/track.png")?;
-        let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture);
-
+        let mut sprite_manager = SpriteManager::new();
+        sprite_manager.add_sprite(Sprite::new_world_scaled(Rc::from(ground_texture.clone()), Vec2::new(1024.0, 1024.0), 1024.0));
+        let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture, sprite_manager);
+        
+        // add world objects
+        world.add_decoration(Vec2::new(0.0, 0.0), Sprite::new_world_scaled(Rc::from(Texture::checkerboard(1024, 1024, 32)), Vec2::new(1024.0, 1024.0), 1024.0));
+        
         // Main camera: car
         let camera1 = Camera::new(0.0, 0.0, 10.0, 0.0);
         
@@ -61,7 +68,9 @@ impl App for Application {
         let input = self.controls.get_car_input();
 
         // Update car physics
-        self.car.update(dt, input.throttle, input.brake, input.turn);
+        self.car.update(dt, input.throttle, input.brake, input.turn); // TODO: Move to world object
+        // Update world
+        self.world.update(dt);
 
         // Update main camera to follow car
         self.camera1.follow_car(&self.car, dt);

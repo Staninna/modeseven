@@ -6,7 +6,7 @@ use super::{Sprite, Texture};
 /// SpriteManager is a simple manager for sprites
 /// It keeps track of loaded textures and sorts sprites by layer
 /// It also provides a method to load textures
-/// 
+///
 /// # Example
 /// ```
 /// let mut sprite_manager = SpriteManager::new();
@@ -43,7 +43,7 @@ impl SpriteManager {
                 return Ok(Rc::clone(texture));
             }
         }
-        
+
         let texture = Rc::new(Texture::from_image(path)?);
         self.textures.push(Rc::clone(&texture));
         Ok(texture)

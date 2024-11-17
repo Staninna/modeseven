@@ -1,7 +1,7 @@
 // In src/world/world.rs
 
 use std::collections::HashMap;
-use super::object::{ObjectType, WorldBehavior, WorldObject};
+use crate::world::objects::{ObjectType, WorldBehavior, WorldObject};
 use crate::rendering::{Sprite, SpriteManager};
 use crate::physics::Vec2;
 
