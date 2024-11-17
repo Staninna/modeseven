@@ -10,7 +10,6 @@ mod input;
 mod utils;
 mod consts;
 mod physics;
-mod world;
 
 use crate::consts::{FPS, MAX_LAG_TIME, PIXELS_HEIGHT, PIXELS_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::app::Application;
