@@ -9,8 +9,10 @@ use crate::{camera::Camera,
             physics::Car,
             rendering::{Renderer, Texture},
             utils::FpsCounter};
+use crate::world::World;
 
 pub struct Application {
+    world: World,
     renderer: Renderer,
     camera1: Camera,
     camera2: Camera,
@@ -22,6 +24,7 @@ pub struct Application {
 
 impl Application {
     pub fn new() -> Result<Self> {
+        let world = World::new();
         let ground_texture = Texture::from_image("assets/track.png")?;
         let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture);
 
@@ -32,6 +35,7 @@ impl Application {
         let camera2 = Camera::new(1024.0 / 2.0, 1024.0 / 2.0, 500.0, 0.0);
 
         Ok(Self {
+            world,
             renderer,
             camera1,
             camera2,

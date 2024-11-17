@@ -7,11 +7,31 @@ pub struct Texture {
     pub width: u32,
     pub height: u32,
     pub pixels: Vec<u8>,
+    pub path: String,
 }
 
 impl Texture {
-    pub fn from_image<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let image = image::open(path)?;
+    pub fn checkerboard(width: u32, height: u32, checker_size: u32) -> Self {
+        let mut pixels = Vec::with_capacity((width * height * 4) as usize);
+
+        for y in 0..height {
+            for x in 0..width {
+                let checker = ((x / checker_size + y / checker_size) % 2) as u8;
+                let color = if checker == 0 { 255 } else { 0 };
+                pixels.extend_from_slice(&[color, color, color, 255]);
+            }
+        }
+
+        Self {
+            width,
+            height,
+            pixels,
+            path: format!("checkerboard_{}x{}-{}x{}.png", width, height, checker_size, checker_size),
+        }
+    }
+    
+    pub fn from_image<P: AsRef<Path> + ToString>(path: P) -> Result<Self> {
+        let image = image::open(&path)?;
         let (width, height) = image.dimensions();
         let bytes_per_pixel = image.color().bytes_per_pixel();
 
@@ -40,6 +60,7 @@ impl Texture {
             width,
             height,
             pixels,
+            path: path.to_string(),
         })
     }
 

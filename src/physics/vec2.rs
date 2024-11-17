@@ -57,3 +57,13 @@ impl std::ops::Mul<f32> for Vec2 {
         }
     }
 }
+
+impl std::ops::Sub for Vec2 {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
