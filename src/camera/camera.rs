@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
-use crate::physics::{Car, Vec2};
+use crate::utils::vec2::Vec2;
+use crate::world::Car;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Camera {
     pub x: f32,
     pub y: f32,
@@ -10,6 +12,12 @@ pub struct Camera {
     pub near: f32,
     pub far: f32,
     pub scale: f32,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Self::new(0.0, 0.0, 0.0, 0.0)
+    }
 }
 
 impl Camera {
@@ -55,22 +63,12 @@ impl Camera {
 
         self.angle += angle_diff * ANGLE_LERP * dt;
 
-        // TODO: static camera height
-        // Adjust camera height based on speed
-        let target_height = 5.0 + car.get_speed() * 0.2;
+        // Calculate camera height
+        let target_height = 15.0 + car.get_speed() * 0.01;
         self.height += (target_height - self.height) * CAMERA_LERP * dt;
 
         // Adjust pitch based on speed (look further ahead at higher speeds)
         let target_pitch = PI / 6.0 + (car.get_speed() / 400.0) * (PI / 12.0);
         self.pitch += (target_pitch - self.pitch) * CAMERA_LERP * dt;
-    }
-    
-    pub fn transform(&self, world_point: Vec2) -> Vec2 {
-        let x = world_point.x - self.x;
-        let y = world_point.y - self.y;
-        Vec2::new(
-            x * self.scale + self.x,
-            y * self.scale + self.y,
-        )
     }
 }

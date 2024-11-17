@@ -1,5 +1,5 @@
 use std::cmp::PartialEq;
-use crate::physics::Vec2;
+use crate::utils::vec2::Vec2;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Car {
@@ -90,7 +90,7 @@ impl CarInput {
         assert!(throttle >= -1.0 && throttle <= 1.0, "throttle must be between -1.0 and 1.0");
         assert!(turn >= -1.0 && turn <= 1.0, "turn must be between -1.0 and 1.0");
         assert!(brake >= -1.0 && brake <= 1.0, "brake must be between -1.0 and 1.0");
-        
+
         Self {
             throttle,
             turn,

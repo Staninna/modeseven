@@ -1,3 +1,5 @@
+// TODO: Remove magic numbers etc by wrapping in types ThingId(usize)
+
 use std::time::Duration;
 use pix_win_loop::{PhysicalSize, WindowBuilder};
 use anyhow::Result;
@@ -9,7 +11,7 @@ mod rendering;
 mod input;
 mod utils;
 mod consts;
-mod physics;
+mod world;
 
 use crate::consts::{FPS, MAX_LAG_TIME, PIXELS_HEIGHT, PIXELS_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::app::Application;

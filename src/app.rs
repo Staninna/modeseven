@@ -1,23 +1,21 @@
-use std::rc::Rc;
 use anyhow::Result;
 use log::info;
 use pix_win_loop::{App, Context, Pixels};
 use std::time::Instant;
 use crate::{camera::Camera,
             consts::{PIXELS_HEIGHT, PIXELS_WIDTH},
-            input::Controls,
-            physics::Car,
+            input::Inputs,
+            world::World,
             rendering::{Renderer, Texture},
             utils::FpsCounter};
-use crate::physics::Vec2;
 
 pub struct Application {
     renderer: Renderer,
+    world: World,
     camera1: Camera,
     camera2: Camera,
-    controls: Controls,
+    controls: Inputs,
     fps_counter: FpsCounter,
-    car: Car,
     last_update: Instant,
 }
 
@@ -25,20 +23,14 @@ impl Application {
     pub fn new() -> Result<Self> {
         let ground_texture = Texture::from_image("assets/track.png")?;
         let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture);
-        
-        // Main camera: car
-        let camera1 = Camera::new(0.0, 0.0, 10.0, 0.0);
-        
-        // Second camera (for nothing for now) later player 2
-        let camera2 = Camera::new(1024.0 / 2.0, 1024.0 / 2.0, 500.0, 0.0);
 
         Ok(Self {
+            world: World::new(),
             renderer,
-            camera1,
-            camera2,
-            controls: Controls::new(),
+            camera1: Camera::default(),
+            camera2: Camera::default(),
+            controls: Inputs::new(),
             fps_counter: FpsCounter::new(1.0),
-            car: Car::new(1024.0 / 3.0, 1024.0 / 3.0),
             last_update: Instant::now(),
         })
     }
@@ -47,21 +39,19 @@ impl Application {
 impl App for Application {
     fn update(&mut self, ctx: &mut Context) -> Result<()> {
         // Update controls
-        self.controls.update(ctx);
+        let inputs = self.controls.update(ctx);
 
         // Calculate delta time
         let now = Instant::now();
         let dt = now.duration_since(self.last_update).as_secs_f32();
         self.last_update = now;
 
-        // Get input values
-        let input = self.controls.get_car_input();
+        // Update world
+        self.world.update(inputs, dt);
 
-        // Update car physics
-        self.car.update(dt, input.throttle, input.brake, input.turn);
-
-        // Update main camera to follow car
-        self.camera1.follow_car(&self.car, dt);
+        // Update cameras
+        self.camera1.follow_car(&self.world.cars[0], dt);
+        self.camera2.follow_car(&self.world.cars[1], dt);
 
         if let Some(fps) = self.fps_counter.update() {
             info!("FPS: {:.2}", fps);

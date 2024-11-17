@@ -61,10 +61,10 @@ impl Renderer {
                 let screen_y = y as f32;
 
                 let color = if let Some((world_x, world_y)) = self.transform(screen_x, screen_y, camera) {
-                    self.ground_texture.sample_bilinear(world_x, world_y, /* hotpink */ [255, 105, 180, 255])
+                    self.ground_texture.sample_octinear(world_x, world_y, /* hotpink */ [255, 105, 180, 255])
                 } else {
                     // Horizon/background is hotpink
-                    [255, 105, 180, 255]
+                    [255, 0, 255, 255]
                 };
 
                 let idx = ((y * self.screen_width + x) * 4) as usize;

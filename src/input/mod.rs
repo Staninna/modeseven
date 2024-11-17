@@ -1,2 +1,2 @@
-mod controls;
-pub use controls::Controls;
+mod inputs;
+pub use inputs::Inputs;

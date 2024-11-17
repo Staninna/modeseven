@@ -29,7 +29,7 @@ impl Texture {
             path: format!("checkerboard_{}x{}-{}x{}.png", width, height, checker_size, checker_size),
         }
     }
-    
+
     pub fn from_image<P: AsRef<Path> + ToString>(path: P) -> Result<Self> {
         let image = image::open(&path)?;
         let (width, height) = image.dimensions();
@@ -115,6 +115,28 @@ impl Texture {
             let top = c00[i] as f32 * (1.0 - fx) + c10[i] as f32 * fx;
             let bottom = c01[i] as f32 * (1.0 - fx) + c11[i] as f32 * fx;
             result[i] = (top * (1.0 - fy) + bottom * fy) as u8;
+        }
+
+        result
+    }
+    
+    pub fn sample_octinear(&self, x: f32, y: f32, bg_color: [u8; 4]) -> [u8; 4] {
+        let x = x.floor();
+        let y = y.floor();
+        let dx = x - x.floor();
+        let dy = y - y.floor();
+
+        let c00 = self.sample(x as f32, y as f32, bg_color);
+        let c10 = self.sample(x as f32 + 1.0, y as f32, bg_color);
+        let c01 = self.sample(x as f32, y as f32 + 1.0, bg_color);
+        let c11 = self.sample(x as f32 + 1.0, y as f32 + 1.0, bg_color);
+
+        // Octiner interpolation
+        let mut result = [0; 4];
+        for i in 0..4 {
+            let top = c00[i] as f32 * (1.0 - dx) + c10[i] as f32 * dx;
+            let bottom = c01[i] as f32 * (1.0 - dx) + c11[i] as f32 * dx;
+            result[i] = (top * (1.0 - dy) + bottom * dy) as u8;
         }
 
         result
