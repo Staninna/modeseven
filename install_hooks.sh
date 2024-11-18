@@ -16,4 +16,7 @@ mkdir -p "$git_hooks_dir"
 cp target/release/pre-commit "$git_hooks_dir/"
 chmod +x "$git_hooks_dir/pre-commit"
 
+# Clean up the build directory
+rm -rf target
+
 echo "Git hooks installed successfully!"
