@@ -1,0 +1,3 @@
+[submodule "school"]
+	path = school
+	url = https://github.com/staninna/modeseven-school.git
