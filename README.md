@@ -14,3 +14,18 @@ git clone --recurse-submodules https://github.com/staninna/modeseven
 git submodule add --depth=1 https://github.com/staninna/modeseven-school.git school
 #                     ^ depth=1 is used cuz binary blobs in git is a pain
 ```
+
+## How to run
+
+```bash
+cargo run --release
+```
+
+## Development
+
+### Install hooks
+
+```bash
+chmod +x install_hooks.sh
+./install_hooks.sh
+```
