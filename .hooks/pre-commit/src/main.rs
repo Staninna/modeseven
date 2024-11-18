@@ -389,7 +389,7 @@ mod tests {
         assert!(blocks[0].docstring.is_none());
     }
 
-    #[test] // TODO: Fix this test
+    #[test]
     fn test_parse_nested_blocks() {
         let content = r#"
             pub enum Test {
