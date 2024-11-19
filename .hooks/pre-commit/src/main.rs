@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::process::{exit, Command};
 use std::{env, fs};
+use std::path::Path;
 
 // Debug logging macro
 const DEBUG: bool = false;
@@ -30,6 +31,29 @@ enum BlockKind {
     TypeAlias,
     Unknown,
 }
+fn should_skip_file(file: &str) -> bool {
+    // Skip checking the pre-commit hook itself
+    let hook_file = Path::new(file);
+    if let Some(file_name) = hook_file.file_name() {
+        if let Some(name) = file_name.to_str() {
+            if name == "main.rs" {
+                // Check if it's in a pre-commit directory
+                if let Some(parent) = hook_file.parent() {
+                    if let Some(parent_name) = parent.file_name() {
+                        if let Some(dir_name) = parent_name.to_str() {
+                            return dir_name == "src" &&
+                                parent.parent().and_then(|p| p.file_name())
+                                    .and_then(|n| n.to_str())
+                                    .map_or(false, |n| n == "pre-commit");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 
 fn parse_blocks(content: &str) -> Vec<Block> {
     let mut blocks = Vec::new();
@@ -70,7 +94,12 @@ fn parse_blocks(content: &str) -> Vec<Block> {
 
         // Detect block starts
         if let Some((kind, is_public)) = detect_block_kind(trimmed) {
-            debug!("Found block: {:?} (public: {}) at line {}", kind, is_public, i + 1);
+            debug!(
+                "Found block: {:?} (public: {}) at line {}",
+                kind,
+                is_public,
+                i + 1
+            );
 
             // Create new block
             let block = Block {
@@ -206,7 +235,8 @@ fn check_blocks(blocks: &[Block]) -> Vec<String> {
                 } else if !block.is_public && block.docstring.is_none() {
                     // For private items, check if docs were removed
                     if let Some(diff) = &git_diff {
-                        if diff.lines()
+                        if diff
+                            .lines()
                             .filter(|line| line.starts_with('-'))
                             .any(|line| line.contains("///") || line.contains("/**"))
                         {
@@ -231,7 +261,8 @@ fn check_blocks(blocks: &[Block]) -> Vec<String> {
     }
 
     violations
-}fn check_force_flag() -> bool {
+}
+fn check_force_flag() -> bool {
     debug!("Checking for force flag");
 
     // Check environment variable
@@ -262,7 +293,10 @@ fn main() {
     debug!("Starting pre-commit hook");
     debug!("Args: {:?}", env::args().collect::<Vec<_>>());
     debug!("Current dir: {:?}", env::current_dir());
-    debug!("Env vars: GIT_COMMIT_FORCE={:?}", env::var("GIT_COMMIT_FORCE"));
+    debug!(
+        "Env vars: GIT_COMMIT_FORCE={:?}",
+        env::var("GIT_COMMIT_FORCE")
+    );
 
     if check_force_flag() {
         debug!("Force flag detected - skipping checks");
@@ -274,14 +308,19 @@ fn main() {
         .output()
         .expect("Failed to execute git command");
 
-    let staged_files = String::from_utf8(output.stdout)
-        .expect("Failed to read git output");
+    let staged_files = String::from_utf8(output.stdout).expect("Failed to read git output");
 
     debug!("Staged files: {}", staged_files);
 
     let mut needs_review = false;
 
     for file in staged_files.lines().filter(|f| f.ends_with(".rs")) {
+        // Skip the pre-commit hook's own file
+        if should_skip_file(file) {
+            debug!("Skipping pre-commit hook file: {}", file);
+            continue;
+        }
+
         debug!("Checking file: {}", file);
 
         let current_content = match fs::read_to_string(file) {
@@ -296,7 +335,7 @@ fn main() {
         debug!("Found {} blocks in {}", current_blocks.len(), file);
 
         let violations = check_blocks(&current_blocks);
-        
+
         debug!("Found {} violations", violations.len());
         debug!("Violations: {:?}", violations);
 
@@ -331,7 +370,8 @@ impl Display for BlockKind {
             BlockKind::Enum => "Enum",
             BlockKind::TypeAlias => "Type alias",
             BlockKind::Unknown => "Block",
-        }.to_string();
+        }
+        .to_string();
         write!(f, "{}", str)
     }
 }
@@ -343,20 +383,62 @@ mod tests {
     // Test that the block kind is correctly detected
     #[test]
     fn test_detect_block_kind() {
-        assert_eq!(detect_block_kind("fn test() {"), Some((BlockKind::Function, false)));
-        assert_eq!(detect_block_kind("pub fn test() {"), Some((BlockKind::Function, true)));
-        assert_eq!(detect_block_kind("struct Test {"), Some((BlockKind::Struct, false)));
-        assert_eq!(detect_block_kind("pub struct Test {"), Some((BlockKind::Struct, true)));
-        assert_eq!(detect_block_kind("enum Test {"), Some((BlockKind::Enum, false)));
-        assert_eq!(detect_block_kind("pub enum Test {"), Some((BlockKind::Enum, true)));
-        assert_eq!(detect_block_kind("impl Test {"), Some((BlockKind::Impl, false)));
-        assert_eq!(detect_block_kind("pub impl Test {"), Some((BlockKind::Impl, true)));
-        assert_eq!(detect_block_kind("mod test {"), Some((BlockKind::Module, false)));
-        assert_eq!(detect_block_kind("pub mod test {"), Some((BlockKind::Module, true)));
-        assert_eq!(detect_block_kind("pub type Test = i32;"), Some((BlockKind::TypeAlias, true)));
-        assert_eq!(detect_block_kind("type Test = i32;"), Some((BlockKind::TypeAlias, false)));
-        assert_eq!(detect_block_kind("pub trait Test {"), Some((BlockKind::Trait, true)));
-        assert_eq!(detect_block_kind("trait Test {"), Some((BlockKind::Trait, false)));
+        assert_eq!(
+            detect_block_kind("fn test() {"),
+            Some((BlockKind::Function, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub fn test() {"),
+            Some((BlockKind::Function, true))
+        );
+        assert_eq!(
+            detect_block_kind("struct Test {"),
+            Some((BlockKind::Struct, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub struct Test {"),
+            Some((BlockKind::Struct, true))
+        );
+        assert_eq!(
+            detect_block_kind("enum Test {"),
+            Some((BlockKind::Enum, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub enum Test {"),
+            Some((BlockKind::Enum, true))
+        );
+        assert_eq!(
+            detect_block_kind("impl Test {"),
+            Some((BlockKind::Impl, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub impl Test {"),
+            Some((BlockKind::Impl, true))
+        );
+        assert_eq!(
+            detect_block_kind("mod test {"),
+            Some((BlockKind::Module, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub mod test {"),
+            Some((BlockKind::Module, true))
+        );
+        assert_eq!(
+            detect_block_kind("pub type Test = i32;"),
+            Some((BlockKind::TypeAlias, true))
+        );
+        assert_eq!(
+            detect_block_kind("type Test = i32;"),
+            Some((BlockKind::TypeAlias, false))
+        );
+        assert_eq!(
+            detect_block_kind("pub trait Test {"),
+            Some((BlockKind::Trait, true))
+        );
+        assert_eq!(
+            detect_block_kind("trait Test {"),
+            Some((BlockKind::Trait, false))
+        );
     }
 
     #[test]
@@ -409,7 +491,6 @@ mod tests {
         assert_eq!(blocks[0].nested_blocks.len(), 1);
     }
 
-
     #[test]
     fn test_private_function_no_docs() {
         let content = r#"
@@ -419,7 +500,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Private functions should not require docs");
+        assert!(
+            violations.is_empty(),
+            "Private functions should not require docs"
+        );
     }
 
     #[test]
@@ -431,7 +515,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(!violations.is_empty(), "Public functions should require docs");
+        assert!(
+            !violations.is_empty(),
+            "Public functions should require docs"
+        );
     }
 
     #[test]
@@ -445,7 +532,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(!violations.is_empty(), "Public methods in impl should require docs");
+        assert!(
+            !violations.is_empty(),
+            "Public methods in impl should require docs"
+        );
     }
 
     #[test]
@@ -459,9 +549,12 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Private methods should not require docs");
+        assert!(
+            violations.is_empty(),
+            "Private methods should not require docs"
+        );
     }
-    
+
     #[test]
     fn test_private_function_no_docs_should_pass() {
         let content = r#"
@@ -471,7 +564,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Private functions should not require docs");
+        assert!(
+            violations.is_empty(),
+            "Private functions should not require docs"
+        );
     }
 
     #[test]
@@ -484,7 +580,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Private function with no previous docs should pass");
+        assert!(
+            violations.is_empty(),
+            "Private function with no previous docs should pass"
+        );
     }
 
     #[test]
@@ -497,7 +596,10 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Private function should not flag removed docs without git history");
+        assert!(
+            violations.is_empty(),
+            "Private function should not flag removed docs without git history"
+        );
     }
 
     #[test]
@@ -510,7 +612,9 @@ mod tests {
         "#;
         let blocks = parse_blocks(content);
         let violations = check_blocks(&blocks);
-        assert!(violations.is_empty(), "Public function with docs should pass");
+        assert!(
+            violations.is_empty(),
+            "Public function with docs should pass"
+        );
     }
-    
 }

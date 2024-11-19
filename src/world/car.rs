@@ -1,5 +1,5 @@
-use std::cmp::PartialEq;
 use crate::utils::Vec2;
+use std::cmp::PartialEq;
 
 /// A vehicle with physics-based movement and control
 ///
@@ -76,7 +76,7 @@ impl Car {
     pub fn new(x: f32, y: f32) -> Self {
         Self {
             position: Vec2::new(x, y),
-            forward: Vec2::new(0.0, 1.0),  // Initially facing up
+            forward: Vec2::new(0.0, 1.0), // Initially facing up
             velocity: Vec2::zero(),
             acceleration: 400.0,
             turn_speed: 2.0,
@@ -120,10 +120,7 @@ impl Car {
         }
 
         // Recalculate forward vector from current angle
-        self.forward = Vec2::new(
-            -self.angle.sin(),
-            self.angle.cos()
-        );
+        self.forward = Vec2::new(-self.angle.sin(), self.angle.cos());
 
         // Calculate and apply acceleration force
         let mut accel_force = Vec2::zero();
@@ -233,9 +230,18 @@ impl CarInput {
     /// // let invalid = CarInput::new(2.0, 0.0, 0.0);  // Throttle > 1.0
     /// ```
     pub fn new(throttle: f32, turn: f32, brake: f32) -> Self {
-        assert!((-1.0..=1.0).contains(&throttle), "throttle must be between -1.0 and 1.0");
-        assert!((-1.0..=1.0).contains(&turn), "turn must be between -1.0 and 1.0");
-        assert!((-1.0..=1.0).contains(&brake), "brake must be between -1.0 and 1.0");
+        assert!(
+            (-1.0..=1.0).contains(&throttle),
+            "throttle must be between -1.0 and 1.0"
+        );
+        assert!(
+            (-1.0..=1.0).contains(&turn),
+            "turn must be between -1.0 and 1.0"
+        );
+        assert!(
+            (-1.0..=1.0).contains(&brake),
+            "brake must be between -1.0 and 1.0"
+        );
 
         Self {
             throttle,

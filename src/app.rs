@@ -3,16 +3,18 @@
 //! This module contains the core Application struct that manages the game's
 //! lifecycle, including initialization, update loop, and rendering.
 
+use crate::{
+    camera::Camera,
+    consts::{PIXELS_HEIGHT, PIXELS_WIDTH},
+    input::Inputs,
+    rendering::{Renderer, Texture},
+    utils::FpsCounter,
+    world::World,
+};
 use anyhow::Result;
 use log::info;
 use pix_win_loop::{App, Context, Pixels};
 use std::time::Instant;
-use crate::{camera::Camera,
-            consts::{PIXELS_HEIGHT, PIXELS_WIDTH},
-            input::Inputs,
-            world::World,
-            rendering::{Renderer, Texture},
-            utils::FpsCounter};
 
 /// Main game application managing state, rendering, and game loop
 ///

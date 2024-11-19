@@ -1,5 +1,5 @@
-use std::f32::consts::PI;
 use crate::world::Car;
+use std::f32::consts::PI;
 
 /// A dynamic camera that can follow cars with smooth transitions
 ///
@@ -87,7 +87,7 @@ impl Camera {
             y,
             height,
             angle,
-            pitch: PI / 6.0,  // 30 degrees
+            pitch: PI / 6.0, // 30 degrees
             near: 1.0,
             far: 1000.0,
             scale: 1.0,
@@ -123,9 +123,9 @@ impl Camera {
     /// camera.follow_car(&player_car, 0.016);  // 60 FPS
     /// ```
     pub fn follow_car(&mut self, car: &Car, dt: f32) {
-        const FOLLOW_DISTANCE: f32 = 0.0;   // Distance behind car
-        const CAMERA_LERP: f32 = 5.0;       // Position transition speed
-        const ANGLE_LERP: f32 = 3.0;        // Rotation transition speed
+        const FOLLOW_DISTANCE: f32 = 0.0; // Distance behind car
+        const CAMERA_LERP: f32 = 5.0; // Position transition speed
+        const ANGLE_LERP: f32 = 3.0; // Rotation transition speed
 
         // Get car's current angle
         let car_angle = car.get_angle();
@@ -140,8 +140,12 @@ impl Camera {
 
         // Calculate the shortest rotation path to match car's angle
         let mut angle_diff = car_angle - self.angle;
-        while angle_diff > PI { angle_diff -= 2.0 * PI; }
-        while angle_diff < -PI { angle_diff += 2.0 * PI; }
+        while angle_diff > PI {
+            angle_diff -= 2.0 * PI;
+        }
+        while angle_diff < -PI {
+            angle_diff += 2.0 * PI;
+        }
         self.angle += angle_diff * ANGLE_LERP * dt;
 
         // Adjust camera height based on car speed

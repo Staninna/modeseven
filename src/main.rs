@@ -4,10 +4,10 @@
 
 mod app;
 mod camera;
-mod rendering;
-mod input;
-mod utils;
 mod consts;
+mod input;
+mod rendering;
+mod utils;
 mod world;
 
 use anyhow::Result;
@@ -15,8 +15,10 @@ use log::LevelFilter;
 use pix_win_loop::{PhysicalSize, WindowBuilder};
 use std::time::Duration;
 
-use crate::{app::Application,
-            consts::{FPS, MAX_LAG_TIME, PIXELS_HEIGHT, PIXELS_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH}};
+use crate::{
+    app::Application,
+    consts::{FPS, MAX_LAG_TIME, PIXELS_HEIGHT, PIXELS_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH},
+};
 
 fn main() -> Result<()> {
     // Init logging

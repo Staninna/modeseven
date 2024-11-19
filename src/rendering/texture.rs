@@ -72,7 +72,10 @@ impl Texture {
             width,
             height,
             pixels,
-            path: format!("checkerboard_{}x{}-{}x{}.png", width, height, checker_size, checker_size),
+            path: format!(
+                "checkerboard_{}x{}-{}x{}.png",
+                width, height, checker_size, checker_size
+            ),
         }
     }
 
@@ -121,7 +124,10 @@ impl Texture {
                 // Already in RGBA format
                 image.as_bytes().to_vec()
             }
-            _ => anyhow::bail!("Unsupported image format with {} bytes per pixel", bytes_per_pixel),
+            _ => anyhow::bail!(
+                "Unsupported image format with {} bytes per pixel",
+                bytes_per_pixel
+            ),
         };
 
         Ok(Self {

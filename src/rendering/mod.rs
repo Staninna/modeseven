@@ -4,8 +4,8 @@
 //! texture mapping. Handles all visual aspects including texture
 //! management, and visual effects.
 
-mod texture;
 mod renderer;
+mod texture;
 
-pub use texture::Texture;
 pub use renderer::Renderer;
+pub use texture::Texture;

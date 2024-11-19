@@ -1,5 +1,5 @@
-use pix_win_loop::{Context, KeyCode};
 use crate::world::CarInput;
+use pix_win_loop::{Context, KeyCode};
 
 /// A handler for keyboard input that manages controls for two cars
 ///
@@ -142,18 +142,30 @@ impl Inputs {
     fn get_car1_input(&self) -> CarInput {
         // Calculate throttle (-1.0 to 1.0)
         let mut throttle = 0.0;
-        if self.w { throttle += 1.0; }
-        if self.s { throttle -= 1.0; }
+        if self.w {
+            throttle += 1.0;
+        }
+        if self.s {
+            throttle -= 1.0;
+        }
 
         // Calculate steering (-1.0 to 1.0)
         let mut turn = 0.0;
-        if self.a { turn += 1.0; }
-        if self.d { turn -= 1.0; }
+        if self.a {
+            turn += 1.0;
+        }
+        if self.d {
+            turn -= 1.0;
+        }
 
         // Calculate brake (0.0 to 1.0)
         let mut brake = 0.0;
-        if self.w { brake -= 1.0; }
-        if self.s { brake += 1.0; }
+        if self.w {
+            brake -= 1.0;
+        }
+        if self.s {
+            brake += 1.0;
+        }
 
         CarInput::new(throttle, turn, brake)
     }
@@ -171,18 +183,30 @@ impl Inputs {
     fn get_car2_input(&self) -> CarInput {
         // Calculate throttle (-1.0 to 1.0)
         let mut throttle = 0.0;
-        if self.up { throttle += 1.0; }
-        if self.down { throttle -= 1.0; }
+        if self.up {
+            throttle += 1.0;
+        }
+        if self.down {
+            throttle -= 1.0;
+        }
 
         // Calculate steering (-1.0 to 1.0)
         let mut turn = 0.0;
-        if self.left { turn += 1.0; }
-        if self.right { turn -= 1.0; }
+        if self.left {
+            turn += 1.0;
+        }
+        if self.right {
+            turn -= 1.0;
+        }
 
         // Calculate brake (0.0 to 1.0)
         let mut brake = 0.0;
-        if self.up { brake -= 1.0; }
-        if self.down { brake += 1.0; }
+        if self.up {
+            brake -= 1.0;
+        }
+        if self.down {
+            brake += 1.0;
+        }
 
         CarInput::new(throttle, turn, brake)
     }

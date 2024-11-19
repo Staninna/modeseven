@@ -92,10 +92,7 @@ impl Renderer {
         let rotated_x = world_x * cos_angle - world_z * sin_angle;
         let rotated_z = world_x * sin_angle + world_z * cos_angle;
 
-        Some((
-            rotated_x + camera.x,
-            rotated_z + camera.y,
-        ))
+        Some((rotated_x + camera.x, rotated_z + camera.y))
     }
 
     /// Transform world coordinates to screen coordinates
@@ -136,7 +133,10 @@ impl Renderer {
     ///
     /// Panics if the frame buffer size does not match screen_width * screen_height * 4 bytes
     pub fn render(&self, frame: &mut [u8], camera: &Camera) {
-        assert_eq!(frame.len(), (self.screen_width * self.screen_height * 4) as usize);
+        assert_eq!(
+            frame.len(),
+            (self.screen_width * self.screen_height * 4) as usize
+        );
 
         self.render_ground(frame, camera);
     }
@@ -168,12 +168,17 @@ impl Renderer {
                 let screen_x = x as f32;
                 let screen_y = y as f32;
 
-                let color = if let Some((world_x, world_y)) = self.transform(screen_x, screen_y, camera) {
-                    self.ground_texture.sample_bilinear(world_x, world_y, /* hotpink */ [255, 105, 180, 255])
-                } else {
-                    // Horizon/background is hotpink
-                    [255, 0, 255, 255]
-                };
+                let color =
+                    if let Some((world_x, world_y)) = self.transform(screen_x, screen_y, camera) {
+                        self.ground_texture.sample_bilinear(
+                            world_x,
+                            world_y,
+                            /* hotpink */ [255, 105, 180, 255],
+                        )
+                    } else {
+                        // Horizon/background is hotpink
+                        [255, 0, 255, 255]
+                    };
 
                 let idx = ((y * self.screen_width + x) * 4) as usize;
                 frame[idx..idx + 4].copy_from_slice(&color);

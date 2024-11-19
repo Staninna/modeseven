@@ -55,9 +55,7 @@ impl World {
         let car1 = Car::new(1024.0 / 3.0, 1024.0 / 3.0);
         let car2 = Car::new(1024.0 / 3.0, 1024.0 / 3.0);
 
-        Self {
-            cars: [car1, car2],
-        }
+        Self { cars: [car1, car2] }
     }
 
     /// Updates the state of all entities in the world
