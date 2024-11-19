@@ -1,246 +1,176 @@
+//! Vehicle physics simulation
+
 use crate::utils::Vec2;
 use std::cmp::PartialEq;
 
 /// A vehicle with physics-based movement and control
 ///
-/// The Car struct implements a simple physics simulation for a vehicle
-/// that can accelerate, brake, and turn. It tracks its position, orientation,
-/// and movement using a basic force-based physics model that includes:
+/// The Car struct implements a physics simulation for a vehicle that can
+/// accelerate, brake, and turn. It uses a simplified force-based model with:
 ///
-/// * Position and orientation tracking
-/// * Velocity-based movement
-/// * Forward/reverse acceleration
-/// * Turning with variable radius
-/// * Speed-based friction
+/// * Position and velocity tracking
+/// * Forward/reverse/breaking acceleration with quadratic air resistance
+/// * Speed-dependent turning radius
+/// * Viscous friction at low speeds
 /// * Maximum speed limiting
 ///
-/// The physics simulation uses frame-rate independent updates through
-/// delta time calculations.
-///
-/// # Example
-///
-/// ```rust
-/// let mut car = Car::new(100.0, 100.0);
-///
-/// // In game loop:
-/// car.update(delta_time, throttle, brake, steering);
-/// renderer.draw_car(&car);
-/// ```
+/// All physics calculations are frame-rate independent through delta time scaling.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Car {
-    // TODO: Make position private and provide accessor methods
-    /// Current position in world space
-    pub position: Vec2,
-    /// Unit vector pointing in the car's forward direction
+    /// Current position in world space (read-only)
+    position: Vec2,
+    /// Normalized vector pointing in car's forward direction
     forward: Vec2,
-    /// Current velocity vector (direction + speed)
+    /// Current velocity vector in units per second
     velocity: Vec2,
-    /// Rate of acceleration in units per second squared
+    /// Rate of acceleration in units/s²
     acceleration: f32,
-    /// Angular velocity in radians per second
+    /// Maximum turning rate in radians/s
     turn_speed: f32,
-    /// Maximum speed in units per second
+    /// Maximum speed in units/s
     max_speed: f32,
-    /// Friction coefficient (higher = more drag)
+    /// Quadratic drag coefficient
+    drag: f32,
+    /// Linear friction coefficient for low speeds
     friction: f32,
-    /// Current rotation angle in radians
+    /// Current rotation in radians (counterclockwise from vertical)
     angle: f32,
 }
 
 impl Car {
-    /// Creates a new car at the specified position
-    ///
-    /// Initializes a car with default physics parameters:
-    /// * Acceleration: 400.0 units/s²
-    /// * Turn speed: 2.0 rad/s
-    /// * Max speed: 200.0 units/s
-    /// * Friction: 1.0
-    /// * Initial angle: 0.0 rad (facing up)
-    /// * Initial velocity: zero
+    /// Creates a new car at the specified position with default physics parameters
     ///
     /// # Arguments
     ///
-    /// * `x` - Initial x-coordinate in world space
-    /// * `y` - Initial y-coordinate in world space
+    /// * `x` - Initial x-coordinate
+    /// * `y` - Initial y-coordinate
     ///
     /// # Returns
     ///
-    /// A new Car instance at the specified position
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let car = Car::new(100.0, 200.0);
-    /// assert_eq!(car.position, Vec2::new(100.0, 200.0));
-    /// ```
+    /// A new Car instance with:
+    /// * Acceleration: 400.0 units/s²
+    /// * Turn speed: 2.0 rad/s (8.0 now but needs to be tuned)
+    /// * Max speed: 200.0 units/s
+    /// * Drag coefficient: 0.001
+    /// * Friction: 0.8
+    /// * Initial angle: 0.0 rad (vertical)
     pub fn new(x: f32, y: f32) -> Self {
         Self {
             position: Vec2::new(x, y),
-            forward: Vec2::new(0.0, 1.0), // Initially facing up
+            forward: Vec2::new(0.0, 1.0),
             velocity: Vec2::zero(),
             acceleration: 400.0,
-            turn_speed: 2.0,
+            turn_speed: 8.0, // when we stand still we rotate extremely fast bug == feature???
             max_speed: 200.0,
-            friction: 1.0,
+            drag: 0.005,
+            friction: 0.95,
             angle: 0.0,
         }
     }
 
     /// Updates the car's physics state based on input controls
     ///
-    /// This method performs the complete physics simulation update including:
-    /// 1. Rotation based on steering input
-    /// 2. Forward vector recalculation
-    /// 3. Acceleration force application
-    /// 4. Friction force application
-    /// 5. Speed limiting
-    /// 6. Position update
-    ///
-    /// All forces are scaled by delta time for frame-rate independence.
-    ///
     /// # Arguments
     ///
-    /// * `dt` - Delta time since last update in seconds
+    /// * `dt` - Delta time in seconds
     /// * `throttle` - Forward/reverse control (-1.0 to 1.0)
     /// * `brake` - Braking force (0.0 to 1.0)
     /// * `steering` - Left/right control (-1.0 to 1.0)
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let mut car = Car::new(0.0, 0.0);
-    ///
-    /// // Apply full throttle for 1 second
-    /// car.update(1.0, 1.0, 0.0, 0.0);
-    /// ```
     pub fn update(&mut self, dt: f32, throttle: f32, brake: f32, steering: f32) {
-        // Update rotation angle based on steering input
+        // Update rotation with speed-dependent turning
         if steering != 0.0 {
-            self.angle += steering * self.turn_speed * dt;
+            let speed_factor = 1.0 - (self.speed() / self.max_speed).min(0.8);
+            self.angle += steering * self.turn_speed * speed_factor * dt;
+
+            // Recalculate and normalize forward vector
+            self.forward = Vec2::new(-self.angle.sin(), self.angle.cos());
+            self.forward = self.forward.normalized();
         }
 
-        // Recalculate forward vector from current angle
-        self.forward = Vec2::new(-self.angle.sin(), self.angle.cos());
+        // Apply acceleration force
+        let mut accel_force = if throttle != 0.0 {
+            self.forward * (self.acceleration * throttle)
+        } else if brake > 0.0 && self.velocity.length() > 0.1 {
+            // Apply brake force against current velocity direction
+            -self.velocity.normalized() * (self.acceleration * brake)
+        } else {
+            Vec2::zero()
+        };
 
-        // Calculate and apply acceleration force
-        let mut accel_force = Vec2::zero();
-        if throttle != 0.0 {
-            accel_force = self.forward * (self.acceleration * throttle);
-        } else if brake > 0.0 {
-            accel_force = self.forward * (-self.acceleration * brake);
+        // Apply quadratic drag at higher speeds
+        let speed = self.velocity.length();
+        if speed > 1.0 {
+            let drag_force = -self.velocity.normalized() * (self.drag * speed * speed);
+            accel_force = accel_force + drag_force;
+        } else {
+            // Apply linear friction at low speeds
+            accel_force = accel_force - self.velocity * self.friction;
         }
 
-        // Update velocity with acceleration
+        // Update velocity with forces
         self.velocity = self.velocity + accel_force * dt;
 
-        // Apply friction force based on current speed
-        let current_speed = self.velocity.length();
-        if current_speed > 0.0 {
-            let friction_force = self.friction * current_speed;
-            let friction_direction = self.velocity.normalized();
-            self.velocity = self.velocity + friction_direction * (-friction_force * dt);
-        }
-
-        // Limit to maximum speed
+        // Apply speed limit
         let speed = self.velocity.length();
         if speed > self.max_speed {
             self.velocity = self.velocity.normalized() * self.max_speed;
         }
 
-        // Update position based on final velocity
+        // Update position
         self.position = self.position + self.velocity * dt;
     }
 
-    /// Returns the car's current speed in units per second
-    ///
-    /// # Returns
-    ///
-    /// The magnitude of the car's velocity vector
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let car = Car::new(0.0, 0.0);
-    /// assert_eq!(car.get_speed(), 0.0);  // New cars start stationary
-    /// ```
-    pub fn get_speed(&self) -> f32 {
+    /// Returns the current position
+    pub fn position(&self) -> Vec2 {
+        self.position
+    }
+
+    /// Returns the forward direction vector
+    pub fn forward(&self) -> Vec2 {
+        self.forward
+    }
+
+    /// Returns the current speed in units per second
+    pub fn speed(&self) -> f32 {
         self.velocity.length()
     }
 
-    /// Returns the car's current rotation angle in radians
-    ///
-    /// # Returns
-    ///
-    /// The car's rotation angle in radians (counterclockwise from right)
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let car = Car::new(0.0, 0.0);
-    /// assert_eq!(car.get_angle(), 0.0);  // New cars start facing up
-    /// ```
-    pub fn get_angle(&self) -> f32 {
+    /// Returns the current rotation angle in radians
+    pub fn angle(&self) -> f32 {
         self.angle
     }
 }
 
-/// Input controls for a car's movement
+/// Input controls for car movement, with value range validation
 ///
-/// CarInput encapsulates the three main control inputs for a car:
-/// throttle, turning, and braking. All inputs are normalized to the
-/// range -1.0 to 1.0 for consistent control handling.
-///
-/// # Input Ranges
-///
-/// * Throttle: -1.0 (full reverse) to 1.0 (full forward)
-/// * Turn: -1.0 (full right) to 1.0 (full left)
-/// * Brake: -1.0 to 1.0 (full brake)
-///
-/// The struct enforces these ranges through assertions in the constructor.
+/// All inputs are normalized to -1.0 to 1.0:
+/// * `throttle`: -1.0 (full reverse) to 1.0 (full forward)
+/// * `turn`: -1.0 (full right) to 1.0 (full left)
+/// * `brake`: 0.0 to 1.0 (full brake)
 #[derive(Debug, Clone, Copy)]
 pub struct CarInput {
-    /// Forward/reverse control (-1.0 to 1.0)
-    pub throttle: f32,
-    /// Left/right steering control (-1.0 to 1.0)
-    pub turn: f32,
-    /// Braking force control (-1.0 to 1.0)
-    pub brake: f32,
+    throttle: f32,
+    turn: f32,
+    brake: f32,
 }
 
 impl CarInput {
-    /// Creates a new set of car control inputs
-    ///
-    /// # Arguments
-    ///
-    /// * `throttle` - Forward/reverse control (-1.0 to 1.0)
-    /// * `turn` - Left/right control (-1.0 to 1.0)
-    /// * `brake` - Brake control (-1.0 to 1.0)
+    /// Creates new validated car control inputs
     ///
     /// # Panics
     ///
-    /// Panics if any input value is outside the range -1.0 to 1.0
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// // Half throttle, quarter turn left, no brake
-    /// let input = CarInput::new(0.5, 0.25, 0.0);
-    ///
-    /// // This would panic:
-    /// // let invalid = CarInput::new(2.0, 0.0, 0.0);  // Throttle > 1.0
-    /// ```
+    /// Panics if inputs exceed their valid ranges
     pub fn new(throttle: f32, turn: f32, brake: f32) -> Self {
         assert!(
             (-1.0..=1.0).contains(&throttle),
-            "throttle must be between -1.0 and 1.0"
+            "Invalid throttle range: {}",
+            throttle
         );
+        assert!((-1.0..=1.0).contains(&turn), "Invalid turn range: {}", turn);
         assert!(
-            (-1.0..=1.0).contains(&turn),
-            "turn must be between -1.0 and 1.0"
-        );
-        assert!(
-            (-1.0..=1.0).contains(&brake),
-            "brake must be between -1.0 and 1.0"
+            (0.0..=1.0).contains(&brake),
+            "Invalid brake range: {}",
+            brake
         );
 
         Self {
@@ -248,5 +178,20 @@ impl CarInput {
             turn,
             brake,
         }
+    }
+
+    /// Get the throttle input value
+    pub fn throttle(&self) -> f32 {
+        self.throttle
+    }
+
+    /// Get the turn input value
+    pub fn turn(&self) -> f32 {
+        self.turn
+    }
+
+    /// Get the brake input value
+    pub fn brake(&self) -> f32 {
+        self.brake
     }
 }

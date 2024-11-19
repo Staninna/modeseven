@@ -1,4 +1,4 @@
-//! Game world state and physics simulation
+//! Game world state and logic
 //!
 //! Manages the game's physical world including car physics,
 //! object positioning, and state updates. Handles all dynamic

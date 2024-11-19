@@ -1,14 +1,24 @@
-#![allow(clippy::module_inception)]
+#![allow(clippy::module_inception)] // allow to have for example world.rs in module `world` `/src/world/world.rs`
+#![forbid(missing_docs)]
+
+//! modeseven
+//!
+//! A 2D racing game inspired by Super Nintendo's Mode 7.
+//!
+//! The game is a two-player split-screen racing game with a split-screen
+//! view of the 2 players' cars. The game is rendered in split-screen mode
+//! with a top view and a bottom view. The top view is player 1's view, the
+//! bottom view is player 2's view.
 
 // TODO: Remove magic numbers etc by wrapping in types ThingId(usize)
 
-mod app;
-mod camera;
-mod consts;
-mod input;
-mod rendering;
-mod utils;
-mod world;
+pub mod app;
+pub mod camera; // TODO: Move inside the renderer module
+pub mod consts;
+pub mod input;
+pub mod rendering;
+pub mod utils;
+pub mod world;
 
 use anyhow::Result;
 use log::LevelFilter;

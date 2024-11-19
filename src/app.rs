@@ -30,26 +30,15 @@ use std::time::Instant;
 /// * Player 1's view in the top half
 /// * Player 2's view in the bottom half
 /// * A separator line between views
-///
-/// # Example
-///
-/// ```rust
-/// match Application::new() {
-///     Ok(mut app) => {
-///         // Start game loop...
-///     }
-///     Err(e) => eprintln!("Failed to initialize game: {}", e),
-/// }
-/// ```
 pub struct Application {
     /// Renderer instance for drawing the game world
     renderer: Renderer,
     /// Game world containing all game entities
     world: World,
     /// Camera for player 1's view (top screen)
-    camera1: Camera,
+    camera_player_one: Camera,
     /// Camera for player 2's view (bottom screen)
-    camera2: Camera,
+    camera_player_two: Camera,
     /// Input handler for both players
     controls: Inputs,
     /// FPS counter for performance monitoring
@@ -76,16 +65,6 @@ impl Application {
     ///
     /// Will return an error if:
     /// * The ground texture file cannot be loaded
-    /// * The renderer fails to initialize
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// match Application::new() {
-    ///     Ok(app) => println!("Game initialized successfully"),
-    ///     Err(e) => eprintln!("Failed to load game: {}", e),
-    /// }
-    /// ```
     pub fn new() -> Result<Self> {
         let ground_texture = Texture::from_image("assets/track.png")?;
         let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture);
@@ -93,8 +72,8 @@ impl Application {
         Ok(Self {
             world: World::new(),
             renderer,
-            camera1: Camera::default(),
-            camera2: Camera::default(),
+            camera_player_one: Camera::default(),
+            camera_player_two: Camera::default(),
             controls: Inputs::new(),
             fps_counter: FpsCounter::new(1.0),
             last_update: Instant::now(),
@@ -110,24 +89,20 @@ impl App for Application {
     /// 2. Calculates frame timing
     /// 3. Updates world physics and entities
     /// 4. Updates camera positions
-    /// 5. Updates performance metrics
-    ///
-    /// The update is frame-rate independent through delta time,
-    /// ensuring consistent game speed regardless of performance.
     ///
     /// # Arguments
     ///
-    /// * `ctx` - Current game context containing input state
+    /// * `ctx` - Current game context containing update state
     ///
     /// # Returns
     ///
     /// * `Ok(())` - Update completed successfully
-    /// * `Err(Error)` - If any update step fails
+    /// * `Err(Error)` - If any update step fails (doesn't happen normally)
     fn update(&mut self, ctx: &mut Context) -> Result<()> {
         // Process player inputs
         let inputs = self.controls.update(ctx);
 
-        // Calculate frame timing
+        // Calculate frame timing (ctx has frame_time() but i don't like it)
         let now = Instant::now();
         let dt = now.duration_since(self.last_update).as_secs_f32();
         self.last_update = now;
@@ -136,13 +111,13 @@ impl App for Application {
         self.world.update(inputs, dt);
 
         // Update camera positions to follow cars
-        self.camera1.follow_car(&self.world.cars[0], dt);
-        self.camera2.follow_car(&self.world.cars[1], dt);
+        self.camera_player_one.follow_car(&self.world.cars[0], dt);
+        self.camera_player_two.follow_car(&self.world.cars[1], dt);
 
         // Update and log performance metrics
-        if let Some(fps) = self.fps_counter.update() {
-            info!("FPS: {:.2}", fps);
-        }
+        // if let Some(fps) = self.fps_counter.update() {
+        //     info!("FPS: {:.2}", fps);
+        // }
 
         Ok(())
     }
@@ -163,7 +138,7 @@ impl App for Application {
     /// # Arguments
     ///
     /// * `pixels` - Pixel buffer for drawing
-    /// * `_blending_factor` - Unused interpolation factor
+    /// * `_blending_factor` - Unused parameter don't know what it does/is
     ///
     /// # Returns
     ///
@@ -177,11 +152,11 @@ impl App for Application {
 
         // Render player 1's view (top half)
         let top_view = &mut frame[0..view_size];
-        self.renderer.render(top_view, &self.camera1);
+        self.renderer.render(top_view, &self.camera_player_one);
 
         // Render player 2's view (bottom half)
         let bottom_view = &mut frame[view_size..];
-        self.renderer.render(bottom_view, &self.camera2);
+        self.renderer.render(bottom_view, &self.camera_player_two);
 
         // Draw red separator line between views
         let separator_row = view_size - row_size as usize;
