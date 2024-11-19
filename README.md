@@ -1,21 +1,23 @@
-# modeseven
+# ModeSeven
+A simple work-in-progress car racing game written in Rust.
 
-A simple wip of a car racing game in rust.
+## Setup
 
-## How to clone
+### Cloning the Repository
 
 ```bash
 # Public code only
 git clone https://github.com/staninna/modeseven.git
 
-# With school content (needs permission)
+# With school content (requires permission)
 git clone --recurse-submodules https://github.com/staninna/modeseven
-# If there is no school directory run (idk why it doesn't clone automatically cuz .gitmodules is defined)
+
+# If school directory is missing (submodule manual setup)
 git submodule add --depth=1 https://github.com/staninna/modeseven-school.git school
-#                     ^ depth=1 is used cuz binary blobs in git is a pain
+# Note: depth=1 is used to minimize repository size due to binary files
 ```
 
-## How to run
+### Running the Game
 
 ```bash
 cargo run --release
@@ -23,8 +25,13 @@ cargo run --release
 
 ## Development
 
-### Install hooks
+### Git Hooks
 
+> ⚠️ **Warning**  
+> The hook functionality is currently broken and needs to be fixed.  
+> This is a game project and the hook is not a priority at the moment.
+
+To install the git hooks:
 ```bash
 chmod +x install_hooks.sh
 ./install_hooks.sh
