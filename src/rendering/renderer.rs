@@ -1,5 +1,6 @@
 use super::texture::Texture;
 use crate::camera::Camera;
+use crate::world::{Car, World};
 
 /// A Mode 7-style renderer for perspective-correct texture mapping
 ///
@@ -90,8 +91,10 @@ impl Renderer {
 
     /// Maps world space coordinates to screen space
     ///
-    /// Performs perspective projection using:
-    /// * TODO
+    /// Performs inverse perspective projection:
+    /// 1. Untranslate from camera position
+    /// 2. Unrotate by camera angle
+    /// 3. Project to screen space using camera parameters
     ///
     /// # Arguments
     ///
@@ -103,7 +106,46 @@ impl Renderer {
     ///
     /// Screen space coordinates if visible, None if occluded
     fn untransform(&self, world_x: f32, world_y: f32, camera: &Camera) -> Option<(f32, f32)> {
-        todo!()
+        // Untranslate by camera position
+        let untranslated_x = world_x - camera.x;
+        let untranslated_y = world_y - camera.y;
+
+        // Unrotate by camera angle
+        let (sin_angle, cos_angle) = camera.angle.sin_cos();
+        let unrotated_x = untranslated_x * cos_angle + untranslated_y * sin_angle;
+        let unrotated_y = -untranslated_x * sin_angle + untranslated_y * cos_angle;
+
+        // Calculate z-depth (distance from camera)
+        let z = unrotated_y;
+
+        // Check if point is within view frustum
+        if z <= camera.near || z >= camera.far {
+            return None;
+        }
+
+        // Project to NDC space
+        let scaled_x = unrotated_x / (z * camera.scale);
+
+        // Calculate y position based on z and horizon
+        let horizon = camera.pitch.tan() * 0.5;
+        let projected_y = horizon + camera.height / z;
+
+        // Check if point is above horizon
+        if projected_y < horizon {
+            return None;
+        }
+
+        // Convert from NDC to screen space
+        let screen_x = (scaled_x + 1.0) * self.viewport_width as f32 / 2.0;
+        let screen_y = (projected_y + 1.0) * self.viewport_height as f32 / 2.0;
+
+        // Check if point is within viewport bounds
+        if screen_x < 0.0 || screen_x >= self.viewport_width as f32
+            || screen_y < 0.0 || screen_y >= self.viewport_height as f32 {
+            return None;
+        }
+
+        Some((screen_x, screen_y))
     }
 
     /// Renders a complete frame with ground plane and horizon
@@ -116,13 +158,18 @@ impl Renderer {
     /// # Panics
     ///
     /// If frame buffer size doesn't match viewport dimensions
-    pub fn render(&self, frame: &mut [u8], camera: &Camera) {
+    pub fn render(&self, frame: &mut [u8], world: &World, camera: &Camera) {
         assert_eq!(
             frame.len(),
             (self.viewport_width * self.viewport_height * 4) as usize
         );
 
+        // First render the ground
         self.render_ground(frame, camera);
+
+        // Then render the cars
+        self.render_car(frame, &world.cars[0], camera);
+        self.render_car(frame, &world.cars[1], camera);
     }
 
     /// Renders the perspective-mapped ground plane
@@ -158,6 +205,38 @@ impl Renderer {
                 // Write color to frame buffer
                 let idx = ((y * self.viewport_width + x) * 4) as usize;
                 frame[idx..idx + 4].copy_from_slice(&color);
+            }
+        }
+    }
+
+    /// Renders the car sprite onto the frame buffer
+    ///
+    /// # Arguments
+    ///
+    /// * `frame` - RGBA pixel buffer for output
+    /// * `car` - The car to render
+    /// * `camera` - View transformation parameters
+    fn render_car(&self, frame: &mut [u8], car: &Car, camera: &Camera) {
+        // Get car position in world space
+        let car_pos = car.position();
+
+        // Transform car position to screen space
+        if let Some((screen_x, screen_y)) = self.untransform(car_pos.x, car_pos.y, camera) {
+            // For now, render a simple 10x10 red rectangle for the car
+            let car_size = 10;
+            let start_x = (screen_x - car_size as f32 / 2.0).max(0.0) as u32;
+            let start_y = (screen_y - car_size as f32 / 2.0).max(0.0) as u32;
+            let end_x = (start_x + car_size).min(self.viewport_width);
+            let end_y = (start_y + car_size).min(self.viewport_height);
+
+            // Red color for the car
+            let car_color = [255, 0, 0, 255];
+
+            for y in start_y..end_y {
+                for x in start_x..end_x {
+                    let idx = ((y * self.viewport_width + x) * 4) as usize;
+                    frame[idx..idx + 4].copy_from_slice(&car_color);
+                }
             }
         }
     }

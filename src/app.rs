@@ -12,7 +12,6 @@ use crate::{
     world::World,
 };
 use anyhow::Result;
-use log::info;
 use pix_win_loop::{App, Context, Pixels};
 use std::time::Instant;
 
@@ -152,11 +151,11 @@ impl App for Application {
 
         // Render player 1's view (top half)
         let top_view = &mut frame[0..view_size];
-        self.renderer.render(top_view, &self.camera_player_one);
+        self.renderer.render(top_view, &self.world, &self.camera_player_one);
 
         // Render player 2's view (bottom half)
         let bottom_view = &mut frame[view_size..];
-        self.renderer.render(bottom_view, &self.camera_player_two);
+        self.renderer.render(bottom_view, &self.world, &self.camera_player_two);
 
         // Draw red separator line between views
         let separator_row = view_size - row_size as usize;

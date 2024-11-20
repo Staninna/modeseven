@@ -1,5 +1,6 @@
 use crate::world::Car;
 use std::f32::consts::PI;
+use crate::utils::Vec2;
 
 /// Camera for dynamic car following and view control 
 ///
@@ -103,5 +104,23 @@ impl Camera {
 
         let target_pitch = PI / 6.0 + (car.speed() / 400.0) * (PI / 12.0);
         self.pitch += (target_pitch - self.pitch) * CAMERA_LERP * dt;
+    }
+    
+    /// Converts world coordinates to screen coordinates
+    ///
+    /// # Arguments
+    ///
+    /// * `world_pos` - World coordinates
+    ///
+    /// # Returns
+    ///
+    /// Screen coordinates
+    pub fn world_to_screen(&self, world_pos: Vec2) -> Vec2 {
+        let screen_pos = Vec2::new(
+            world_pos.x * self.scale + self.x,
+            world_pos.y * self.scale + self.y,
+        );
+
+        screen_pos
     }
 }
