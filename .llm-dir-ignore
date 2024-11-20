@@ -4,3 +4,4 @@ target
 .git
 .gitignore
 Cargo.lock
+school
