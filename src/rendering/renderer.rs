@@ -209,7 +209,8 @@ impl Renderer {
         }
     }
 
-    /// Renders the car sprite onto the frame buffer
+    // TODO: Unify this function to render all kinds of entities
+    /// Renders the car sprite onto the frame buffer with distance-based scaling
     ///
     /// # Arguments
     ///
@@ -220,18 +221,37 @@ impl Renderer {
         // Get car position in world space
         let car_pos = car.position();
 
+        // Calculate distance from camera to car
+        let dx = car_pos.x - camera.x;
+        let dy = car_pos.y - camera.y;
+        let distance = (dx * dx + dy * dy).sqrt();
+
+        // Base size and scaling factor
+        let base_size = 60.0; // Base size when at reference distance
+        let reference_distance = 100.0; // Distance at which car is at base size
+        let min_size = 5.0; // Minimum size to prevent car from disappearing
+
+        // Calculate scaled size based on distance
+        // Using inverse relationship with distance, clamped to minimum size
+        let scale_factor = (reference_distance / distance).min(4.0).max(0.25);
+        let car_size = (base_size * scale_factor).max(min_size) as u32;
+
         // Transform car position to screen space
         if let Some((screen_x, screen_y)) = self.untransform(car_pos.x, car_pos.y, camera) {
-            // For now, render a simple 10x10 red rectangle for the car
-            let car_size = 10;
+            // Calculate bounds for the car sprite
             let start_x = (screen_x - car_size as f32 / 2.0).max(0.0) as u32;
             let start_y = (screen_y - car_size as f32 / 2.0).max(0.0) as u32;
             let end_x = (start_x + car_size).min(self.viewport_width);
             let end_y = (start_y + car_size).min(self.viewport_height);
 
-            // Red color for the car
-            let car_color = [255, 0, 0, 255];
+            // Choose color based on which car (assuming index 0 is red, 1 is blue)
+            let car_color = if car.speed() > 1.0 {
+                [255, 0, 0, 255] // Moving - red
+            } else {
+                [0, 0, 255, 255] // Stationary - blue
+            };
 
+            // Draw the car as a scaled square
             for y in start_y..end_y {
                 for x in start_x..end_x {
                     let idx = ((y * self.viewport_width + x) * 4) as usize;
