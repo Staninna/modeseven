@@ -2,7 +2,7 @@ use crate::world::Car;
 use std::f32::consts::PI;
 use crate::utils::Vec2;
 
-/// Camera for dynamic car following and view control 
+/// Camera for dynamic car following and view control
 ///
 /// Provides:
 /// * Smooth position transitions
@@ -66,6 +66,7 @@ impl Camera {
         }
     }
 
+    // TODO: This function sucks when follow distance is anything remote a real number i am gonna use so hard 0.0 for now
     /// Updates camera to follow a car with smooth transitions
     ///
     /// Adjusts camera parameters based on car state:
@@ -105,7 +106,7 @@ impl Camera {
         let target_pitch = PI / 6.0 + (car.speed() / 400.0) * (PI / 12.0);
         self.pitch += (target_pitch - self.pitch) * CAMERA_LERP * dt;
     }
-    
+
     /// Converts world coordinates to screen coordinates
     ///
     /// # Arguments
