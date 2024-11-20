@@ -1,6 +1,6 @@
+use crate::utils::Vec2;
 use crate::world::Car;
 use std::f32::consts::PI;
-use crate::utils::Vec2;
 
 /// Camera for dynamic car following and view control
 ///
@@ -71,7 +71,7 @@ impl Camera {
     ///
     /// Adjusts camera parameters based on car state:
     /// * Position tracks behind car
-    /// * Height increases with speed 
+    /// * Height increases with speed
     /// * Pitch tilts down more at high speeds
     /// * Rotation matches car direction
     ///
@@ -95,8 +95,12 @@ impl Camera {
 
         // Find shortest rotation path
         let mut angle_diff = car_angle - self.angle;
-        while angle_diff > PI { angle_diff -= 2.0 * PI; }
-        while angle_diff < -PI { angle_diff += 2.0 * PI; }
+        while angle_diff > PI {
+            angle_diff -= 2.0 * PI;
+        }
+        while angle_diff < -PI {
+            angle_diff += 2.0 * PI;
+        }
         self.angle += angle_diff * ANGLE_LERP * dt;
 
         // Adjust height and pitch with speed

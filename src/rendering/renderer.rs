@@ -140,8 +140,11 @@ impl Renderer {
         let screen_y = (projected_y + 1.0) * self.viewport_height as f32 / 2.0;
 
         // Check if point is within viewport bounds
-        if screen_x < 0.0 || screen_x >= self.viewport_width as f32
-            || screen_y < 0.0 || screen_y >= self.viewport_height as f32 {
+        if screen_x < 0.0
+            || screen_x >= self.viewport_width as f32
+            || screen_y < 0.0
+            || screen_y >= self.viewport_height as f32
+        {
             return None;
         }
 
