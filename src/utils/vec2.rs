@@ -1,3 +1,5 @@
+// TODO: Consider using glam for this instead of rolling our own
+
 //! A 2D vector implementation
 
 /// A two-dimensional vector with float components
