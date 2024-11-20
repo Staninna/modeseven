@@ -1,0 +1,6 @@
+target
+.llm-dir-ignore
+.idea
+.git
+.gitignore
+Cargo.lock
