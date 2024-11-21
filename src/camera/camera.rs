@@ -1,5 +1,5 @@
-use crate::utils::Vec2;
 use crate::world::Car;
+use glam::Vec2;
 use std::f32::consts::PI;
 
 /// Camera for dynamic car following and view control

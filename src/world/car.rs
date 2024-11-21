@@ -1,6 +1,6 @@
 //! Vehicle physics simulation
 
-use crate::utils::Vec2;
+use glam::Vec2;
 use std::cmp::PartialEq;
 
 /// A vehicle with physics-based movement and control
@@ -58,7 +58,7 @@ impl Car {
         Self {
             position: Vec2::new(x, y),
             forward: Vec2::new(0.0, 1.0),
-            velocity: Vec2::zero(),
+            velocity: Vec2::ZERO,
             acceleration: 400.0,
             turn_speed: 8.0, // when we stand still we rotate extremely fast bug == feature???
             max_speed: 200.0,
@@ -84,7 +84,7 @@ impl Car {
 
             // Recalculate and normalize forward vector
             self.forward = Vec2::new(-self.angle.sin(), self.angle.cos());
-            self.forward = self.forward.normalized();
+            self.forward = self.forward.normalize();
         }
 
         // Apply acceleration force
@@ -92,15 +92,15 @@ impl Car {
             self.forward * (self.acceleration * throttle)
         } else if brake > 0.0 && self.velocity.length() > 0.1 {
             // Apply brake force against current velocity direction
-            -self.velocity.normalized() * (self.acceleration * brake)
+            -self.velocity.normalize() * (self.acceleration * brake)
         } else {
-            Vec2::zero()
+            Vec2::ZERO
         };
 
         // Apply quadratic drag at higher speeds
         let speed = self.velocity.length();
         if speed > 1.0 {
-            let drag_force = -self.velocity.normalized() * (self.drag * speed * speed);
+            let drag_force = -self.velocity.normalize() * (self.drag * speed * speed);
             accel_force = accel_force + drag_force;
         } else {
             // Apply linear friction at low speeds
@@ -113,7 +113,7 @@ impl Car {
         // Apply speed limit
         let speed = self.velocity.length();
         if speed > self.max_speed {
-            self.velocity = self.velocity.normalized() * self.max_speed;
+            self.velocity = self.velocity.normalize() * self.max_speed;
         }
 
         // Update position

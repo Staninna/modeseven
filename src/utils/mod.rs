@@ -5,7 +5,5 @@
 //! game. Provides common functionality shared across modules.
 
 mod fps;
-mod vec2;
 
 pub use fps::FpsCounter;
-pub use vec2::Vec2;
