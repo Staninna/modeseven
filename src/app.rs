@@ -9,12 +9,14 @@ use crate::{
     consts::{PIXELS_HEIGHT, PIXELS_WIDTH, TRACK_FILE},
     input::Inputs,
     rendering::Renderer,
-    utils::FpsCounter,
     world::World,
 };
 use anyhow::Result;
+use pix_win_loop::winit::event::{Event, WindowEvent};
 use pix_win_loop::{App, Context, Pixels};
 use std::time::Instant;
+#[cfg(debug_assertions)]
+use {crate::utils::FpsCounter, log::info};
 
 /// Main game application managing state, rendering, and game loop
 ///
@@ -41,6 +43,7 @@ pub struct Application {
     camera_player_two: Camera,
     /// Input handler for both players
     controls: Inputs,
+    #[cfg(debug_assertions)]
     /// FPS counter for performance monitoring
     fps_counter: FpsCounter,
     /// Timestamp of last update for delta time calculation
@@ -76,6 +79,7 @@ impl Application {
             camera_player_one: Camera::default(),
             camera_player_two: Camera::default(),
             controls: Inputs::new(),
+            #[cfg(debug_assertions)]
             fps_counter: FpsCounter::new(1.0),
             last_update: Instant::now(),
         })
@@ -115,10 +119,11 @@ impl App for Application {
         self.camera_player_one.follow_car(&self.world.cars[0], dt);
         self.camera_player_two.follow_car(&self.world.cars[1], dt);
 
+        #[cfg(debug_assertions)]
         // Update and log performance metrics
-        // if let Some(fps) = self.fps_counter.update() {
-        //     info!("FPS: {:.2}", fps);
-        // }
+        if let Some(fps) = self.fps_counter.update() {
+            info!("FPS: {:.2}", fps);
+        }
 
         Ok(())
     }
@@ -172,5 +177,52 @@ impl App for Application {
         pixels.render()?;
 
         Ok(())
+    }
+
+    /// Handles events from the window system
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - Event to handle
+    fn handle(&mut self, event: &Event<()>) -> Result<()> {
+        if let Event::WindowEvent { event, .. } = event {
+            match event {
+                // WindowEvent::ActivationTokenDone { .. } => {}
+                // WindowEvent::Resized(_) => {}
+                // WindowEvent::Moved(_) => {}
+                // WindowEvent::CloseRequested => {}
+                // WindowEvent::Destroyed => {}
+                // WindowEvent::DroppedFile(_) => {}
+                // WindowEvent::HoveredFile(_) => {}
+                // WindowEvent::HoveredFileCancelled => {}
+                // WindowEvent::Focused(_) => {}
+                // WindowEvent::KeyboardInput { .. } => {}
+                // WindowEvent::ModifiersChanged(_) => {}
+                // WindowEvent::Ime(_) => {}
+                // WindowEvent::CursorMoved { .. } => {}
+                // WindowEvent::CursorEntered { .. } => {}
+                // WindowEvent::CursorLeft { .. } => {}
+                // WindowEvent::MouseWheel { .. } => {}
+                // WindowEvent::MouseInput { .. } => {}
+                // WindowEvent::TouchpadMagnify { .. } => {}
+                // WindowEvent::SmartMagnify { .. } => {}
+                // WindowEvent::TouchpadRotate { .. } => {}
+                // WindowEvent::TouchpadPressure { .. } => {}
+                // WindowEvent::AxisMotion { .. } => {}
+                // WindowEvent::Touch(_) => {}
+                // WindowEvent::ScaleFactorChanged { .. } => {}
+                // WindowEvent::ThemeChanged(_) => {}
+                // WindowEvent::Occluded(_) => {}
+                WindowEvent::RedrawRequested => {}
+
+                _ => {
+                    dbg!(event);
+                }
+            };
+
+            Ok(())
+        } else {
+            Ok(())
+        }
     }
 }
