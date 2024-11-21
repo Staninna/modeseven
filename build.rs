@@ -19,18 +19,25 @@ fn generate_filename_consts(out_dir: &str) {
         })
         .collect();
 
-    let const_code = entries
-        .iter()
-        .map(|(const_name, filename)| {
-            format!(
-                "/// Asset file: {}\npub const {}_FILE: &str = \"{}\";",
-                filename, const_name, filename
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
+    let mut code = String::new();
 
-    fs::write(Path::new(out_dir).join("filename_consts.rs"), const_code).unwrap();
+    // Generate individual constants
+    for (const_name, filename) in &entries {
+        code.push_str(&format!(
+            "/// Asset file: {}\npub const {}_FILE: &str = \"{}\";\n\n",
+            filename, const_name, filename
+        ));
+    }
+
+    // Generate the array of all filenames
+    code.push_str("/// Array containing all asset filenames\n");
+    code.push_str("pub const ALL_ASSET_FILES: &[&str] = &[\n");
+    for (const_name, _) in &entries {
+        code.push_str(&format!("    {}_FILE,\n", const_name));
+    }
+    code.push_str("];\n");
+
+    fs::write(Path::new(out_dir).join("filename_consts.rs"), code).unwrap();
 }
 
 fn main() {
