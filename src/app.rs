@@ -4,10 +4,11 @@
 //! lifecycle, including initialization, update loop, and rendering.
 
 use crate::{
+    assets::AssetManager,
     camera::Camera,
-    consts::{PIXELS_HEIGHT, PIXELS_WIDTH},
+    consts::{PIXELS_HEIGHT, PIXELS_WIDTH, TRACK_FILE},
     input::Inputs,
-    rendering::{Renderer, Texture},
+    rendering::Renderer,
     utils::FpsCounter,
     world::World,
 };
@@ -65,8 +66,9 @@ impl Application {
     /// Will return an error if:
     /// * The ground texture file cannot be loaded
     pub fn new() -> Result<Self> {
-        let ground_texture = Texture::from_image("assets/track.png")?;
-        let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture);
+        let mut asset_manager = AssetManager::new();
+        let ground_texture = asset_manager.load(TRACK_FILE);
+        let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture.clone());
 
         Ok(Self {
             world: World::new(),

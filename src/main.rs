@@ -13,6 +13,7 @@
 // TODO: Remove magic numbers etc by wrapping in types ThingId(usize)
 
 pub mod app;
+pub mod assets;
 pub mod camera; // TODO: Move inside the renderer module
 pub mod consts;
 pub mod input;

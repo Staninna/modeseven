@@ -31,3 +31,6 @@ pub const FPS: f32 = 144.0;
 /// Prevents spiral of death in case of major lag spikes by capping
 /// the time step used for physics/game logic updates.
 pub const MAX_LAG_TIME: f32 = 0.1;
+
+// Include generated constants
+include!(concat!(env!("OUT_DIR"), "/filename_consts.rs"));

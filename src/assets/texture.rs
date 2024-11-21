@@ -1,6 +1,12 @@
-use anyhow::Result;
-use image::GenericImageView;
-use std::path::Path;
+//! A 2D texture with RGBA pixels and sampling support
+//!
+//! Texture provides:
+//! * RGBA pixel storage (4 bytes per pixel)
+//! * Nearest-neighbor and bilinear sampling
+//! * Image file loading with format conversion
+//! * Debug checkerboard pattern generation
+
+use image::GenericImageView as _;
 
 /// A 2D texture with RGBA pixels and sampling support
 ///
@@ -19,11 +25,20 @@ pub struct Texture {
     pub height: u32,
     /// Raw RGBA pixel data
     pub pixels: Vec<u8>,
-    /// Source identifier
-    pub path: String,
 }
 
 impl Texture {
+    /// Creates a texture from an image
+    pub fn from_image(image: image::DynamicImage) -> Self {
+        let (width, height) = image.dimensions();
+        let pixels = image.into_rgba8().into_raw();
+        Self {
+            width,
+            height,
+            pixels,
+        }
+    }
+
     /// Creates a test checkerboard pattern texture
     ///
     /// # Arguments
@@ -50,48 +65,7 @@ impl Texture {
             width,
             height,
             pixels,
-            path: format!(
-                "checkerboard_{}x{}-{}x{}.png",
-                width, height, checker_size, checker_size
-            ),
         }
-    }
-
-    /// Loads a texture from an image file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Path to image file
-    ///
-    /// # Returns
-    ///
-    /// A new texture from the loaded image, or an error
-    pub fn from_image<P: AsRef<Path> + ToString>(path: P) -> Result<Self> {
-        let image = image::open(&path)?;
-        let (width, height) = image.dimensions();
-        let bytes_per_pixel = image.color().bytes_per_pixel();
-
-        let pixels: Vec<u8> = /* TODO: This is really hacky */ match bytes_per_pixel {
-            3 => {
-                let pixels_rgb = image.as_bytes().to_vec();
-                pixels_rgb
-                    .chunks_exact(3)
-                    .flat_map(|chunk| vec![chunk[0], chunk[1], chunk[2], 255])
-                    .collect()
-            }
-            4 => image.as_bytes().to_vec(),
-            _ => anyhow::bail!(
-                "Unsupported image format with {} bytes per pixel",
-                bytes_per_pixel
-            ),
-        };
-
-        Ok(Self {
-            width,
-            height,
-            pixels,
-            path: path.to_string(),
-        })
     }
 
     /// Samples a pixel using nearest-neighbor interpolation
@@ -173,5 +147,15 @@ impl Texture {
         }
 
         result
+    }
+
+    /// Get the width of the texture
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    /// Get the height of the texture
+    pub fn height(&self) -> u32 {
+        self.height
     }
 }

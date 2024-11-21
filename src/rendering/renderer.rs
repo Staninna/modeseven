@@ -1,4 +1,4 @@
-use super::texture::Texture;
+use crate::assets::Texture;
 use crate::camera::Camera;
 use crate::world::{Car, World};
 
