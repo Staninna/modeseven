@@ -35,6 +35,8 @@ use {crate::utils::FpsCounter, log::info};
 pub struct Application {
     /// Renderer instance for drawing the game world
     renderer: Renderer,
+    /// Asset manager for loading assets
+    asset_manager: AssetManager,
     /// Game world containing all game entities
     world: World,
     /// Camera for player 1's view (top screen)
@@ -76,6 +78,7 @@ impl Application {
         Ok(Self {
             world: World::new(),
             renderer,
+            asset_manager,
             camera_player_one: Camera::default(),
             camera_player_two: Camera::default(),
             controls: Inputs::new(),
@@ -216,7 +219,7 @@ impl App for Application {
                 WindowEvent::RedrawRequested => {}
 
                 _ => {
-                    dbg!(event);
+                    // dbg!(event);
                 }
             };
 
