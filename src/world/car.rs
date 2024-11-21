@@ -1,5 +1,8 @@
 //! Vehicle physics simulation
 
+use crate::consts::CAR_FILE;
+use crate::rendering::Renderable;
+use crate::world::World;
 use glam::Vec2;
 use std::cmp::PartialEq;
 
@@ -193,5 +196,19 @@ impl CarInput {
     /// Get the brake input value
     pub fn brake(&self) -> f32 {
         self.brake
+    }
+}
+
+impl Renderable for Car {
+    fn position(&self) -> Vec2 {
+        self.position()
+    }
+
+    fn base_size(&self) -> f32 {
+        60.0 // Base car size
+    }
+
+    fn texture_file(&self, world: &World) -> &str {
+        CAR_FILE
     }
 }
