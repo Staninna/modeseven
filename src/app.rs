@@ -13,9 +13,9 @@ use crate::game::{
     input::Inputs, /* TODO: Move from this piece of shit to the handle() func */
     rendering::Renderer, world::World,
 };
-use crate::menu::MenuRenderer;
-use crate::menu::MenuState;
-use crate::state::GameState;
+
+use crate::menu::{MenuAction, MenuRenderer};
+use crate::state::{GameState, MenuState};
 use anyhow::Result;
 use pix_win_loop::winit::event::{Event, WindowEvent};
 use pix_win_loop::{App, Context, KeyCode, Pixels};
@@ -138,46 +138,113 @@ impl App for Application {
         };
 
         match self.state {
-            GameState::Menu(menu_state) => {
-                // Handle menu input
+            GameState::Menu(_) => {
+                // Handle menu navigation
                 if ctx.input.is_physical_key_pressed(KeyCode::ArrowUp) {
-                    self.menu_renderer.move_selection(-1, 3); // 3 menu items
-                    log::info!(
-                        "Menu selection moved up to item {}",
-                        self.menu_renderer.selected_item()
-                    );
-                }
-                if ctx.input.is_physical_key_pressed(KeyCode::ArrowDown) {
-                    self.menu_renderer.move_selection(1, 3);
-                    log::info!(
-                        "Menu selection moved down to item {}",
-                        self.menu_renderer.selected_item()
-                    );
-                }
-                if ctx.input.is_physical_key_pressed(KeyCode::Enter) {
-                    match (menu_state, self.menu_renderer.selected_item()) {
-                        (MenuState::Main, 0) => {
-                            log::info!("State change: Main Menu -> Playing");
-                            self.state = GameState::Playing;
-                            self.last_update = now;
-                            // TODO: Reset menu selection and game state
-                        }
-                        (MenuState::Main, 1) => {
-                            log::info!("State change: Main Menu -> Settings Menu");
-                            self.state = GameState::Menu(MenuState::Settings);
-                        }
-                        (MenuState::Main, 2) => {
-                            log::info!("State change: Main Menu -> Credits Menu");
-                            self.state = GameState::Menu(MenuState::Credits);
-                        }
-                        _ => {}
+                    let prev_text = self.menu_renderer.current_selected_text();
+                    let current_menu = self.menu_renderer.current_menu().to_string();
+
+                    self.menu_renderer.move_selection(-1);
+                    let curr_text = self.menu_renderer.current_selected_text();
+
+                    if let Some(text) = prev_text {
+                        log::info!(
+                            "Menu: Moved selection up from '{}' to '{}' in '{}' menu",
+                            text,
+                            curr_text.unwrap_or_default(),
+                            current_menu
+                        );
                     }
                 }
+
+                if ctx.input.is_physical_key_pressed(KeyCode::ArrowDown) {
+                    let prev_text = self.menu_renderer.current_selected_text();
+                    let current_menu = self.menu_renderer.current_menu().to_string();
+
+                    self.menu_renderer.move_selection(1);
+                    let curr_text = self.menu_renderer.current_selected_text();
+
+                    if let Some(text) = prev_text {
+                        log::info!(
+                            "Menu: Moved selection down from '{}' to '{}' in '{}' menu",
+                            text,
+                            curr_text.unwrap_or_default(),
+                            current_menu
+                        );
+                    }
+                }
+
+                // Handle menu selection/activation
+                if ctx.input.is_physical_key_pressed(KeyCode::Enter) {
+                    match self.menu_renderer.handle_input() {
+                        MenuAction::Nothing => {
+                            log::debug!("Menu: Selected item has no action");
+                        }
+                        MenuAction::StartGame => {
+                            log::info!("Menu: Starting game");
+                            self.state = GameState::Playing;
+                            self.last_update = now;
+                        }
+                        MenuAction::OpenSubmenu(submenu) => {
+                            log::info!(
+                                "Menu: Navigating from '{:?}' to '{}'",
+                                self.menu_renderer.current_menu(),
+                                submenu
+                            );
+                        }
+                        MenuAction::BackToParent => {
+                            log::info!(
+                                "Menu: Returning to parent menu from '{}'",
+                                self.menu_renderer.current_menu()
+                            );
+                        }
+                        MenuAction::ToggleSetting(setting) => {
+                            log::info!("Menu: Toggling setting '{}'", setting);
+                            // TODO: Implement actual setting toggle
+                            // Example:
+                            // match setting.as_str() {
+                            //     "difficulty" => self.toggle_difficulty(),
+                            //     "fullscreen" => self.toggle_fullscreen(ctx),
+                            //     "vsync" => self.toggle_vsync(ctx),
+                            //     _ => log::warn!("Unknown setting: {}", setting),
+                            // }
+                        }
+                        MenuAction::SetValue(key, value) => {
+                            log::info!("Menu: Setting '{}' to '{}'", key, value);
+                            match key.as_str() {
+                                "quit" => {
+                                    if value == "true" {
+                                        log::info!("Menu: Quitting game");
+                                        ctx.exit();
+                                    }
+                                }
+                                "master_volume" => {
+                                    log::info!("Setting master volume to {}%", value);
+                                    // TODO: Implement volume control
+                                }
+                                "music_volume" => {
+                                    log::info!("Setting music volume to {}%", value);
+                                    // TODO: Implement volume control
+                                }
+                                "sfx_volume" => {
+                                    log::info!("Setting SFX volume to {}%", value);
+                                    // TODO: Implement volume control
+                                }
+                                _ => log::warn!("Unknown setting key: {}", key),
+                            }
+                        }
+                    }
+                }
+
+                // Handle menu back/escape
                 if ctx.input.is_physical_key_pressed(KeyCode::Escape)
-                    && menu_state != MenuState::Main
+                    && self.menu_renderer.current_menu() != "main"
                 {
-                    log::info!("State change: {} Menu -> Main Menu", menu_state);
-                    self.state = GameState::Menu(MenuState::Main);
+                    log::info!(
+                        "Menu: Escape pressed, returning from '{}'",
+                        self.menu_renderer.current_menu()
+                    );
+                    self.menu_renderer.handle_input(); // Simulates pressing "Back"
                 }
             }
             GameState::Playing => {
@@ -269,10 +336,7 @@ impl App for Application {
                     // use menu renderer without clearing background so u can overlay menus/ui is hacky but would work
                 }
             }
-            GameState::Menu(menu_state) => {
-                self.menu_renderer
-                    .render(frame, menu_state, &self.asset_manager)?
-            }
+            GameState::Menu(menu_state) => self.menu_renderer.render(frame, &self.asset_manager)?,
         }
 
         // Update display
