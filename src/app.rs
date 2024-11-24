@@ -86,7 +86,7 @@ impl Application {
     /// * The ground texture file cannot be loaded
     pub fn new() -> Result<Self> {
         let asset_manager = AssetManager::new();
-        let ground_texture = asset_manager.get(TRACK_FILE);
+        let ground_texture = asset_manager.get_texture(TRACK_FILE);
         let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture.clone());
 
         Ok(Self {

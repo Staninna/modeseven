@@ -175,7 +175,7 @@ impl Renderer {
             let end_x = (start_x + entity_size).min(self.viewport_width);
             let end_y = (start_y + entity_size).min(self.viewport_height);
 
-            let texture = assets.get(entity.texture_file(world));
+            let texture = assets.get_texture(entity.texture_file(world));
 
             for y in start_y..end_y {
                 for x in start_x..end_x {

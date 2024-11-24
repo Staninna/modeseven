@@ -172,7 +172,9 @@ impl MenuRenderer {
         }
     }
 
-    pub fn render(&mut self, frame: &mut [u8], _assets: &AssetManager) -> anyhow::Result<()> {
+    pub fn render(&mut self, frame: &mut [u8], assets: &AssetManager) -> anyhow::Result<()> {
+        let font = assets.get_font();
+
         // Clear screen with dark background
         for pixel in frame.chunks_exact_mut(4) {
             pixel.copy_from_slice(&[30, 30, 30, 255]);
@@ -185,7 +187,7 @@ impl MenuRenderer {
                 } else {
                     ElementState::Normal
                 });
-                item.render(frame, PIXELS_WIDTH, PIXELS_HEIGHT);
+                item.render(frame, PIXELS_WIDTH, PIXELS_HEIGHT, font);
             }
         }
 
