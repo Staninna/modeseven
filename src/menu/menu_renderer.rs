@@ -4,14 +4,17 @@ use crate::menu::element::{ElementState, MenuAction, MenuElement, MenuItem};
 use glam::Vec2;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Menu {
+    name: String,
     items: Vec<MenuItem>,
     selected_item: usize,
 }
 
 impl Menu {
-    fn new(items: Vec<MenuItem>) -> Self {
+    fn new(name: String, items: Vec<MenuItem>) -> Self {
         let mut menu = Self {
+            name,
             items,
             selected_item: 0,
         };
@@ -46,6 +49,10 @@ impl Menu {
     fn selected_text(&self) -> Option<&str> {
         self.items.get(self.selected_item).map(|item| item.text())
     }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 pub struct MenuRenderer {
@@ -61,127 +68,188 @@ impl MenuRenderer {
         // Main Menu
         menus.insert(
             "main".to_string(),
-            Menu::new(vec![
-                MenuItem::new("Play", MenuAction::StartGame),
-                MenuItem::new("Options", MenuAction::OpenSubmenu("options".to_string())),
-                MenuItem::new("Graphics", MenuAction::OpenSubmenu("graphics".to_string())),
-                MenuItem::new("Sound", MenuAction::OpenSubmenu("sound".to_string())),
-                MenuItem::new("Controls", MenuAction::OpenSubmenu("controls".to_string())),
-                MenuItem::new("Credits", MenuAction::OpenSubmenu("credits".to_string())),
-                MenuItem::new("Quit", MenuAction::OpenSubmenu("quit".to_string())),
-            ]),
+            Menu::new(
+                "Main Menu".to_string(),
+                vec![
+                    MenuItem::new("Play", MenuAction::StartGame),
+                    MenuItem::new("Options", MenuAction::OpenSubmenu("options".to_string())),
+                    MenuItem::new("Graphics", MenuAction::OpenSubmenu("graphics".to_string())),
+                    MenuItem::new("Sound", MenuAction::OpenSubmenu("sound".to_string())),
+                    MenuItem::new("Controls", MenuAction::OpenSubmenu("controls".to_string())),
+                    MenuItem::new("Credits", MenuAction::OpenSubmenu("credits".to_string())),
+                    MenuItem::new("Quit", MenuAction::OpenSubmenu("quit".to_string())),
+                ],
+            ),
         );
 
         // Options Menu
         menus.insert(
             "options".to_string(),
-            Menu::new(vec![
-                MenuItem::new(
-                    "Difficulty: Normal",
-                    MenuAction::ToggleSetting("difficulty".to_string()),
-                ),
-                MenuItem::new(
-                    "Fullscreen: Off",
-                    MenuAction::ToggleSetting("fullscreen".to_string()),
-                ),
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Options".to_string(),
+                vec![
+                    MenuItem::new(
+                        "Difficulty: Normal",
+                        MenuAction::ToggleSetting("difficulty".to_string()),
+                    ),
+                    MenuItem::new(
+                        "Fullscreen: Off",
+                        MenuAction::ToggleSetting("fullscreen".to_string()),
+                    ),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Graphics Menu
         menus.insert(
             "graphics".to_string(),
-            Menu::new(vec![
-                MenuItem::new(
-                    "Resolution: 1920x1080",
-                    MenuAction::OpenSubmenu("resolution".to_string()),
-                ),
-                MenuItem::new(
-                    "Quality: High",
-                    MenuAction::ToggleSetting("quality".to_string()),
-                ),
-                MenuItem::new("VSync: On", MenuAction::ToggleSetting("vsync".to_string())),
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Graphics".to_string(),
+                vec![
+                    MenuItem::new(
+                        "Resolution: 1920x1080",
+                        MenuAction::OpenSubmenu("resolution".to_string()),
+                    ),
+                    MenuItem::new(
+                        "Quality: High",
+                        MenuAction::ToggleSetting("quality".to_string()),
+                    ),
+                    MenuItem::new("VSync: On", MenuAction::ToggleSetting("vsync".to_string())),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
+        );
+
+        // Resolution Menu
+        menus.insert(
+            "resolution".to_string(),
+            Menu::new(
+                "Resolution".to_string(),
+                vec![
+                    MenuItem::new("1920x1080", MenuAction::Nothing),
+                    MenuItem::new("1280x720", MenuAction::Nothing),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Sound Menu
         menus.insert(
             "sound".to_string(),
-            Menu::new(vec![
-                MenuItem::new(
-                    "Master Volume: 100%",
-                    MenuAction::SetValue("master_volume".to_string(), "100".to_string()),
-                ),
-                MenuItem::new(
-                    "Music Volume: 80%",
-                    MenuAction::SetValue("music_volume".to_string(), "80".to_string()),
-                ),
-                MenuItem::new(
-                    "SFX Volume: 90%",
-                    MenuAction::SetValue("sfx_volume".to_string(), "90".to_string()),
-                ),
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Sound".to_string(),
+                vec![
+                    MenuItem::new(
+                        "Master Volume: 100%",
+                        MenuAction::SetValue("master_volume".to_string(), "100".to_string()),
+                    ),
+                    MenuItem::new(
+                        "Music Volume: 80%",
+                        MenuAction::SetValue("music_volume".to_string(), "80".to_string()),
+                    ),
+                    MenuItem::new(
+                        "SFX Volume: 90%",
+                        MenuAction::SetValue("sfx_volume".to_string(), "90".to_string()),
+                    ),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Controls Menu
         menus.insert(
             "controls".to_string(),
-            Menu::new(vec![
-                MenuItem::new(
-                    "Keyboard Settings",
-                    MenuAction::OpenSubmenu("keyboard".to_string()),
-                ),
-                MenuItem::new(
-                    "Gamepad Settings",
-                    MenuAction::OpenSubmenu("gamepad".to_string()),
-                ),
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Controls".to_string(),
+                vec![
+                    MenuItem::new(
+                        "Keyboard Settings",
+                        MenuAction::OpenSubmenu("keyboard".to_string()),
+                    ),
+                    MenuItem::new(
+                        "Gamepad Settings",
+                        MenuAction::OpenSubmenu("gamepad".to_string()),
+                    ),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Keyboard Settings Menu
         menus.insert(
             "keyboard".to_string(),
-            Menu::new(vec![
-                MenuItem::new("Key Bindings", MenuAction::Nothing), // TODO: Implement
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Keyboard Settings".to_string(),
+                vec![
+                    MenuItem::new("Key Bindings", MenuAction::Nothing), // TODO: Implement
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Gamepad Settings Menu
         menus.insert(
             "gamepad".to_string(),
-            Menu::new(vec![
-                MenuItem::new("Gamepad Bindings", MenuAction::Nothing), // TODO: Implement
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Gamepad Settings".to_string(),
+                vec![
+                    MenuItem::new("Gamepad Bindings", MenuAction::Nothing), // TODO: Implement
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Credits Menu
         menus.insert(
             "credits".to_string(),
-            Menu::new(vec![
-                MenuItem::new("Created by You", MenuAction::Nothing),
-                MenuItem::new("Graphics: You", MenuAction::Nothing),
-                MenuItem::new("Music: You", MenuAction::Nothing),
-                MenuItem::new("Back", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Credits".to_string(),
+                vec![
+                    MenuItem::new("Created by You", MenuAction::Nothing),
+                    MenuItem::new("Graphics: You", MenuAction::Nothing),
+                    MenuItem::new("Music: You", MenuAction::Nothing),
+                    MenuItem::new("Back", MenuAction::BackToParent),
+                ],
+            ),
         );
 
         // Quit Confirmation Menu
         menus.insert(
             "quit".to_string(),
-            Menu::new(vec![
-                MenuItem::new("Are you sure?", MenuAction::Nothing),
-                MenuItem::new(
-                    "Yes",
-                    MenuAction::SetValue("quit".to_string(), "true".to_string()),
-                ),
-                MenuItem::new("No", MenuAction::BackToParent),
-            ]),
+            Menu::new(
+                "Quit Confirmation".to_string(),
+                vec![
+                    MenuItem::new("Are you sure?", MenuAction::Nothing),
+                    MenuItem::new(
+                        "Yes",
+                        MenuAction::SetValue("quit".to_string(), "true".to_string()),
+                    ),
+                    MenuItem::new("No", MenuAction::BackToParent),
+                ],
+            ),
         );
+
+        // Some dirty runtime checks to ensure menus are valid
+        for (_, menu) in &menus {
+            if menu.item_count() == 0 {
+                panic!("A menu must have at least one item");
+            }
+
+            let is_main_menu = menu.name() == "Main Menu";
+            if !is_main_menu
+                && menu.item_count() > 1
+                && ["Back", "No"].contains(
+                    &menu.items[menu.item_count() - 1]
+                        .text()
+                        .to_lowercase()
+                        .as_str(),
+                )
+            {
+                dbg!(&menu.name);
+                panic!("The last item in a menu must be a back/no item");
+            }
+        }
 
         Self {
             menus,

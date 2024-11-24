@@ -96,11 +96,11 @@ impl MenuElement for MenuItem {
         let text = self.text();
         let height = font.v_metrics(Scale::uniform(16.0)).ascent;
 
-        let x = self.position.x as f32 - self.dimensions.x as f32 / 2.0;
-        let y = self.position.y as f32 - self.dimensions.y as f32 / 2.0;
+        let x = self.position.x - self.dimensions.x / 1.5;
+        let y = self.position.y - self.dimensions.y / 1.5;
         // Step 3: Render text
         let glyphs: Vec<_> = font
-            .layout(text, Scale::uniform(32.0), point(0.0, height))
+            .layout(text, Scale::uniform(20.0), point(0.0, height))
             .collect();
         for (i, glyph) in glyphs.iter().enumerate() {
             let x = x + (self.dimensions.x as f32)

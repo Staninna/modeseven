@@ -1,5 +1,5 @@
 use crate::assets::Texture;
-use crate::consts::{ALL_ASSET_FILES, UNIQUE_FONT_FILE};
+use crate::consts::{ALL_ASSET_FILES, HALO_DEK_FONT_FILE};
 use include_assets::{include_dir, NamedArchive};
 use rusttype::Font;
 use std::collections::HashMap;
@@ -37,7 +37,7 @@ impl AssetManager {
         }
 
         // Convert the font data to a static slice (black magic)
-        let font_data = assets.get(UNIQUE_FONT_FILE).expect("Font not found");
+        let font_data = assets.get(HALO_DEK_FONT_FILE).expect("Font not found");
         let font_data_static: &'static [u8] = Box::leak(font_data.to_vec().into_boxed_slice());
 
         let font =
