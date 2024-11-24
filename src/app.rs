@@ -202,12 +202,12 @@ impl App for Application {
                             log::info!("Menu: Toggling setting '{}'", setting);
                             // TODO: Implement actual setting toggle
                             // Example:
-                            // match setting.as_str() {
-                            //     "difficulty" => self.toggle_difficulty(),
-                            //     "fullscreen" => self.toggle_fullscreen(ctx),
-                            //     "vsync" => self.toggle_vsync(ctx),
-                            //     _ => log::warn!("Unknown setting: {}", setting),
-                            // }
+                            match setting.as_str() {
+                                // "difficulty" => self.toggle_difficulty(),
+                                // "fullscreen" => self.toggle_fullscreen(ctx),
+                                // "vsync" => self.toggle_vsync(ctx),
+                                _ => log::warn!("Unknown setting: {}", setting),
+                            }
                         }
                         MenuAction::SetValue(key, value) => {
                             log::info!("Menu: Setting '{}' to '{}'", key, value);

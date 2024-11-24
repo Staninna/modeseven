@@ -127,8 +127,14 @@ impl MenuRenderer {
             Menu::new(
                 "Resolution".to_string(),
                 vec![
-                    MenuItem::new("1920x1080", MenuAction::Nothing),
-                    MenuItem::new("1280x720", MenuAction::Nothing),
+                    MenuItem::new(
+                        "1920x1080",
+                        MenuAction::SetValue("resolution".to_string(), "1920x1080".to_string()),
+                    ),
+                    MenuItem::new(
+                        "1280x720",
+                        MenuAction::SetValue("resolution".to_string(), "1280x720".to_string()),
+                    ),
                     MenuItem::new("Back", MenuAction::BackToParent),
                 ],
             ),
@@ -220,12 +226,32 @@ impl MenuRenderer {
             Menu::new(
                 "Quit Confirmation".to_string(),
                 vec![
-                    MenuItem::new("Are you sure?", MenuAction::Nothing),
+                    MenuItem::new(
+                        "Are you sure?",
+                        MenuAction::OpenSubmenu("hahahaha".to_string()),
+                    ),
                     MenuItem::new(
                         "Yes",
                         MenuAction::SetValue("quit".to_string(), "true".to_string()),
                     ),
                     MenuItem::new("No", MenuAction::BackToParent),
+                ],
+            ),
+        );
+
+        // hahahaha
+        menus.insert(
+            "hahahaha".to_string(),
+            Menu::new(
+                "hahahaha".to_string(),
+                vec![
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("hahahaha", MenuAction::Nothing),
+                    MenuItem::new("No. That's it. I'm done.", MenuAction::BackToParent),
                 ],
             ),
         );
