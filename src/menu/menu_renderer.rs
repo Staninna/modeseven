@@ -141,6 +141,24 @@ impl MenuRenderer {
             ]),
         );
 
+        // Keyboard Settings Menu
+        menus.insert(
+            "keyboard".to_string(),
+            Menu::new(vec![
+                MenuItem::new("Key Bindings", MenuAction::Nothing), // TODO: Implement
+                MenuItem::new("Back", MenuAction::BackToParent),
+            ]),
+        );
+
+        // Gamepad Settings Menu
+        menus.insert(
+            "gamepad".to_string(),
+            Menu::new(vec![
+                MenuItem::new("Gamepad Bindings", MenuAction::Nothing), // TODO: Implement
+                MenuItem::new("Back", MenuAction::BackToParent),
+            ]),
+        );
+
         // Credits Menu
         menus.insert(
             "credits".to_string(),
@@ -187,7 +205,7 @@ impl MenuRenderer {
                 } else {
                     ElementState::Normal
                 });
-                item.render(frame, PIXELS_WIDTH, PIXELS_HEIGHT, font);
+                item.render(frame, PIXELS_WIDTH, PIXELS_HEIGHT, &font);
             }
         }
 
