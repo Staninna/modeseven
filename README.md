@@ -1,4 +1,5 @@
 # ModeSeven
+
 A simple work-in-progress car racing game written in Rust.
 
 ## Setup
@@ -23,16 +24,7 @@ git submodule add --depth=1 https://github.com/staninna/modeseven-school.git sch
 cargo run --release
 ```
 
-## Development
+<!-- Links:
+http://www.extentofthejam.com/WheelsPage/
 
-### Git Hooks
-
-> ⚠️ **Warning**  
-> The hook functionality is currently broken and needs to be fixed.  
-> This is a game project and the hook is not a priority at the moment.
-
-To install the git hooks:
-```bash
-chmod +x install_hooks.sh
-./install_hooks.sh
-```
+-->
