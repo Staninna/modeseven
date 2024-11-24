@@ -1,7 +1,6 @@
 /// TODO: Add docs
 use std::fmt;
 
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GameState {
     Menu(MenuState),
