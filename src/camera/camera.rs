@@ -81,8 +81,8 @@ impl Camera {
     /// * ANGLE_LERP: 3.0 (rotation speed)
     pub fn follow_car(&mut self, car: &Car, dt: f32) {
         const FOLLOW_DISTANCE: f32 = 0.0;
-        const CAMERA_LERP: f32 = 5.0;
-        const ANGLE_LERP: f32 = 3.0;
+        const CAMERA_LERP: f32 = 10.0;
+        const ANGLE_LERP: f32 = 7.0;
 
         // Calculate target position behind car
         let car_angle = car.angle();
