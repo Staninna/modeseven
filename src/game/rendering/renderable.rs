@@ -1,4 +1,4 @@
-use crate::world::World;
+use crate::game::world::World;
 use glam::Vec2;
 
 /// Trait for objects that can be rendered in the game world

@@ -1,4 +1,4 @@
-use crate::world::CarInput;
+use crate::game::world::CarInput;
 use pix_win_loop::{Context, KeyCode, NamedKey};
 
 /// Input handler for two-player racing controls

@@ -1,4 +1,4 @@
-use crate::world::Car;
+use crate::game::world::Car;
 use glam::Vec2;
 use std::f32::consts::PI;
 
@@ -79,6 +79,7 @@ impl Camera {
     /// * FOLLOW_DISTANCE: 0.0 (centered)
     /// * CAMERA_LERP: 5.0 (position speed)
     /// * ANGLE_LERP: 3.0 (rotation speed)
+    // TODO: wierd bug after game is paused
     pub fn follow_car(&mut self, car: &Car, dt: f32) {
         const FOLLOW_DISTANCE: f32 = 0.0;
         const CAMERA_LERP: f32 = 10.0;

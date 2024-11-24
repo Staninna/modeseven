@@ -1,23 +1,27 @@
+//! TODO: Update docs they are currently wrong
 //! Main application and game loop management
 //!
 //! This module contains the core Application struct that manages the game's
 //! lifecycle, including initialization, update loop, and rendering.
 
-use crate::{
-    assets::AssetManager,
+use crate::assets::AssetManager;
+use crate::consts::{PIXELS_HEIGHT, PIXELS_WIDTH, TRACK_FILE};
+#[cfg(debug_assertions)]
+use crate::game::utils::FpsCounter;
+use crate::game::{
     camera::Camera,
-    consts::{PIXELS_HEIGHT, PIXELS_WIDTH, TRACK_FILE},
-    input::Inputs,
-    rendering::Renderer,
-    world::World,
+    input::Inputs, /* TODO: Move from this piece of shit to the handle() func */
+    rendering::Renderer, world::World,
 };
+use crate::menu::MenuRenderer;
+use crate::menu::MenuState;
+use crate::state::GameState;
 use anyhow::Result;
 use pix_win_loop::winit::event::{Event, WindowEvent};
-use pix_win_loop::{App, Context, Pixels};
+use pix_win_loop::{App, Context, KeyCode, Pixels};
 use std::time::Instant;
-#[cfg(debug_assertions)]
-use {crate::utils::FpsCounter, log::info};
 
+/// TODO: Update docs they are currently wrong
 /// Main game application managing state, rendering, and game loop
 ///
 /// The Application struct serves as the central coordinator for the game,
@@ -33,10 +37,9 @@ use {crate::utils::FpsCounter, log::info};
 /// * Player 2's view in the bottom half
 /// * A separator line between views
 pub struct Application {
+    // Game state stuff
     /// Renderer instance for drawing the game world
     renderer: Renderer,
-    /// Asset manager for loading assets
-    asset_manager: AssetManager,
     /// Game world containing all game entities
     world: World,
     /// Camera for player 1's view (top screen)
@@ -45,6 +48,16 @@ pub struct Application {
     camera_player_two: Camera,
     /// Input handler for both players
     controls: Inputs,
+
+    // Menu stuff
+    /// Menu renderer
+    menu_renderer: MenuRenderer,
+
+    // Global state and stuff
+    /// Menu/game state
+    state: GameState,
+    /// Asset manager for loading assets
+    asset_manager: AssetManager,
     #[cfg(debug_assertions)]
     /// FPS counter for performance monitoring
     fps_counter: FpsCounter,
@@ -53,6 +66,7 @@ pub struct Application {
 }
 
 impl Application {
+    /// TODO: Update docs they are currently wrong
     /// Creates and initializes a new game application
     ///
     /// This method performs the complete initialization sequence:
@@ -76,6 +90,7 @@ impl Application {
         let renderer = Renderer::new(PIXELS_WIDTH, PIXELS_HEIGHT / 2, ground_texture.clone());
 
         Ok(Self {
+            state: GameState::Menu(MenuState::Main),
             world: World::new(),
             renderer,
             asset_manager,
@@ -85,11 +100,13 @@ impl Application {
             #[cfg(debug_assertions)]
             fps_counter: FpsCounter::new(1.0),
             last_update: Instant::now(),
+            menu_renderer: MenuRenderer::new(),
         })
     }
 }
 
 impl App for Application {
+    /// TODO: Update docs they are currently wrong
     /// Updates the game state for one frame
     ///
     /// This method performs the complete frame update sequence:
@@ -106,31 +123,91 @@ impl App for Application {
     ///
     /// * `Ok(())` - Update completed successfully
     /// * `Err(Error)` - If any update step fails (doesn't happen normally)
+    ///
+    /// Updated menu flow:
+    /// [![](https://mermaid.ink/img/pako:eNqVVEtu2zAQvcqAQXYyihZdEUU2ctGVCjnsqlYWtDSShUikwY-BIMk1cpAui54mJylJfeqITpDKG3Lmcea9mQffk1JWSChpFD_s4ce6EDB92u6GaEEy3grIUFj4zo9tw00rRUFOsP7Lsm2ArMDDv-zU1fPTb8g7fgffeI8-wNCYVjTan1OFVWv0gPv14fnpD4VMHhFKq7RUPv5VGFQUGHZYmpuoHaxWVw8FGV8X5MHFTkAoqkKc15NKhYEUMMMN6khLvvW8HVVPIwCVFWK8-xQqKKUwSnYaeGnaIy755Wybc6uxCkp0yQ9I4Rq1HUaxobCxbaQqH0UND7ymnEWFY8z7ZDO7C1uM9bJ5d9OKlsTSGTEu7uaNnpeX8M8yRoI0ezcwPcxaxCsMiwYpgluWgmLUxNEjWfYmdCTrkWm25HiNxiqhPcOZ7gliHvQm8hbLoh28yKfn8yeIsuNar7GG3nUOc6rbrqMXn3b-l2hnrVukF3VdJ6XspArHc-8b587g4rHAR_xc_VcBZ5AX_X2BV58vC_iRTwqiXJ64Ec78ojTLEjensT1JSI_Klarcv9G9xxbEuaZ3s6PuWHF161376HDcGsnuREmoURYToqRt9oTWvNPuZg-Va7ZuuXN9P0cPXPyUcro__gUm3n0i?type=png)](https://mermaid.live/edit#pako:eNqVVEtu2zAQvcqAQXYyihZdEUU2ctGVCjnsqlYWtDSShUikwY-BIMk1cpAui54mJylJfeqITpDKG3Lmcea9mQffk1JWSChpFD_s4ce6EDB92u6GaEEy3grIUFj4zo9tw00rRUFOsP7Lsm2ArMDDv-zU1fPTb8g7fgffeI8-wNCYVjTan1OFVWv0gPv14fnpD4VMHhFKq7RUPv5VGFQUGHZYmpuoHaxWVw8FGV8X5MHFTkAoqkKc15NKhYEUMMMN6khLvvW8HVVPIwCVFWK8-xQqKKUwSnYaeGnaIy755Wybc6uxCkp0yQ9I4Rq1HUaxobCxbaQqH0UND7ymnEWFY8z7ZDO7C1uM9bJ5d9OKlsTSGTEu7uaNnpeX8M8yRoI0ezcwPcxaxCsMiwYpgluWgmLUxNEjWfYmdCTrkWm25HiNxiqhPcOZ7gliHvQm8hbLoh28yKfn8yeIsuNar7GG3nUOc6rbrqMXn3b-l2hnrVukF3VdJ6XspArHc-8b587g4rHAR_xc_VcBZ5AX_X2BV58vC_iRTwqiXJ64Ec78ojTLEjensT1JSI_Klarcv9G9xxbEuaZ3s6PuWHF161376HDcGsnuREmoURYToqRt9oTWvNPuZg-Va7ZuuXN9P0cPXPyUcro__gUm3n0i)
     fn update(&mut self, ctx: &mut Context) -> Result<()> {
-        // Process player inputs
-        let inputs = self.controls.update(ctx);
-
-        // Calculate frame timing (ctx has frame_time() but i don't like it)
+        // Calculate dt but only update last_update timestamp when playing
         let now = Instant::now();
-        let dt = now.duration_since(self.last_update).as_secs_f32();
-        self.last_update = now;
+        let dt = if matches!(self.state, GameState::Playing) {
+            let dt = now.duration_since(self.last_update).as_secs_f32();
+            self.last_update = now;
+            dt
+        } else {
+            0.0 // No time passes while paused or in menus
+        };
 
-        // Update game world and physics
-        self.world.update(inputs, dt);
+        match self.state {
+            GameState::Menu(menu_state) => {
+                // Handle menu input
+                if ctx.input.is_physical_key_pressed(KeyCode::ArrowUp) {
+                    self.menu_renderer.move_selection(-1, 3); // 3 menu items
+                    log::info!(
+                        "Menu selection moved up to item {}",
+                        self.menu_renderer.selected_item()
+                    );
+                }
+                if ctx.input.is_physical_key_pressed(KeyCode::ArrowDown) {
+                    self.menu_renderer.move_selection(1, 3);
+                    log::info!(
+                        "Menu selection moved down to item {}",
+                        self.menu_renderer.selected_item()
+                    );
+                }
+                if ctx.input.is_physical_key_pressed(KeyCode::Enter) {
+                    match (menu_state, self.menu_renderer.selected_item()) {
+                        (MenuState::Main, 0) => {
+                            log::info!("State change: Main Menu -> Playing");
+                            self.state = GameState::Playing;
+                            self.last_update = now;
+                            // TODO: Reset menu selection and game state
+                        }
+                        (MenuState::Main, 1) => {
+                            log::info!("State change: Main Menu -> Settings Menu");
+                            self.state = GameState::Menu(MenuState::Settings);
+                        }
+                        (MenuState::Main, 2) => {
+                            log::info!("State change: Main Menu -> Credits Menu");
+                            self.state = GameState::Menu(MenuState::Credits);
+                        }
+                        _ => {}
+                    }
+                }
+                if ctx.input.is_physical_key_pressed(KeyCode::Escape)
+                    && menu_state != MenuState::Main
+                {
+                    log::info!("State change: {} Menu -> Main Menu", menu_state);
+                    self.state = GameState::Menu(MenuState::Main);
+                }
+            }
+            GameState::Playing => {
+                self.controls.update(ctx);
+                self.world.update(&self.controls, dt);
+                self.camera_player_one.follow_car(&self.world.cars[0], dt);
+                self.camera_player_two.follow_car(&self.world.cars[1], dt);
 
-        // Update camera positions to follow cars
-        self.camera_player_one.follow_car(&self.world.cars[0], dt);
-        self.camera_player_two.follow_car(&self.world.cars[1], dt);
-
-        #[cfg(debug_assertions)]
-        // Update and log performance metrics
-        if let Some(fps) = self.fps_counter.update() {
-            info!("FPS: {:.2}", fps);
+                if ctx.input.is_physical_key_pressed(KeyCode::Escape) {
+                    log::info!("State change: Playing -> Paused");
+                    self.state = GameState::Paused;
+                }
+            }
+            GameState::Paused => {
+                if ctx.input.is_physical_key_pressed(KeyCode::Escape) {
+                    log::info!("State change: Paused -> Playing");
+                    self.state = GameState::Playing;
+                    self.last_update = now;
+                }
+                if ctx.input.is_physical_key_pressed(KeyCode::KeyQ) {
+                    log::info!("State change: Paused -> Main Menu");
+                    self.state = GameState::Menu(MenuState::Main);
+                }
+            }
         }
 
         Ok(())
     }
 
+    /// TODO: Update docs they are currently wrong
     /// Renders the game scene in split-screen mode
     ///
     /// This method renders the complete game scene, including:
@@ -155,33 +232,47 @@ impl App for Application {
     /// * `Err(Error)` - If any rendering step fails
     fn render(&mut self, pixels: &mut Pixels, _blending_factor: f64) -> Result<()> {
         let frame = pixels.frame_mut();
-        let half_height = PIXELS_HEIGHT / 2;
-        let row_size = PIXELS_WIDTH * 4;
-        let view_size = (PIXELS_WIDTH * half_height * 4) as usize;
 
-        // Render player 1's view (top half)
-        let top_view = &mut frame[0..view_size];
-        self.renderer.render(
-            top_view,
-            &self.world,
-            &self.camera_player_one,
-            &self.asset_manager,
-        );
+        match self.state {
+            GameState::Playing | GameState::Paused => {
+                let half_height = PIXELS_HEIGHT / 2;
+                let row_size = PIXELS_WIDTH * 4;
+                let view_size = (PIXELS_WIDTH * half_height * 4) as usize;
 
-        // Render player 2's view (bottom half)
-        let bottom_view = &mut frame[view_size..];
-        self.renderer.render(
-            bottom_view,
-            &self.world,
-            &self.camera_player_two,
-            &self.asset_manager,
-        );
+                // Render player 1's view (top half)
+                let top_view = &mut frame[0..view_size];
+                self.renderer.render(
+                    top_view,
+                    &self.world,
+                    &self.camera_player_one,
+                    &self.asset_manager,
+                );
 
-        // Draw red separator line between views
-        let separator_row = view_size - row_size as usize;
-        for x in 0..PIXELS_WIDTH as usize {
-            let pixel_idx = separator_row + x * 4;
-            frame[pixel_idx..pixel_idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+                // Render player 2's view (bottom half)
+                let bottom_view = &mut frame[view_size..];
+                self.renderer.render(
+                    bottom_view,
+                    &self.world,
+                    &self.camera_player_two,
+                    &self.asset_manager,
+                );
+
+                // Draw red separator line between views
+                let separator_row = view_size - row_size as usize;
+                for x in 0..PIXELS_WIDTH as usize {
+                    let pixel_idx = separator_row + x * 4;
+                    frame[pixel_idx..pixel_idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+                }
+
+                if self.state == GameState::Paused {
+                    // TODO: Draw text?? paused
+                    // use menu renderer without clearing background so u can overlay menus/ui is hacky but would work
+                }
+            }
+            GameState::Menu(menu_state) => {
+                self.menu_renderer
+                    .render(frame, menu_state, &self.asset_manager)?
+            }
         }
 
         // Update display

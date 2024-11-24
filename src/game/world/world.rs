@@ -1,7 +1,7 @@
 //! Game world state and update logic
 
-use crate::input::Inputs;
-use crate::world::Car;
+use super::super::input::Inputs;
+use super::Car;
 
 /// The main game world containing all dynamic game entities
 ///

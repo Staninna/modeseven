@@ -1,8 +1,8 @@
 //! Vehicle physics simulation
 
+use super::super::rendering::Renderable;
+use super::World;
 use crate::consts::CAR_FILE;
-use crate::rendering::Renderable;
-use crate::world::World;
 use glam::Vec2;
 use std::cmp::PartialEq;
 

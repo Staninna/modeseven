@@ -1,7 +1,7 @@
+use super::super::camera::Camera;
+use super::super::rendering::Renderable;
 use crate::assets::{AssetManager, Texture};
-use crate::camera::Camera;
-use crate::rendering::Renderable;
-use crate::world::World;
+use crate::game::world::World;
 
 /// A Mode 7-style renderer for perspective-correct texture mapping
 ///

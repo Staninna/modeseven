@@ -1,5 +1,6 @@
-#![allow(clippy::module_inception)] // allow to have for example world.rs in module `world` `/src/world/world.rs`
-#![forbid(missing_docs)]
+// allow to have for example world.rs in module `world` `/src/world/world.rs`
+#![allow(clippy::module_inception)]
+// #![forbid(missing_docs)] // TODO: Enable this when we have documentation
 
 //! modeseven
 //!
@@ -11,15 +12,12 @@
 //! bottom view is player 2's view.
 
 // TODO: Remove magic numbers etc by wrapping in types ThingId(usize)
-
 pub mod app;
 pub mod assets;
-pub mod camera; // TODO: Move inside the renderer module
 pub mod consts;
-pub mod input;
-pub mod rendering;
-pub mod utils;
-pub mod world;
+pub mod game;
+pub mod menu;
+mod state;
 
 use anyhow::Result;
 use log::LevelFilter;
